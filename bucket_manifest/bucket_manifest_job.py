@@ -1,14 +1,17 @@
+import sys
 import boto3
 import json
 import time
 from functools import partial
 import argparse
 import botocore
-import logging as logger
+import logging
 from multiprocessing.pool import Pool
 
 from botocore.exceptions import ClientError
 
+logging.basicConfig(level=logging.DEBUG)
+logging.getlogging().addHandler(logging.StreamHandler(sys.stdout))
 
 NUMBER_OF_THREADS = 16
 MAX_RETRIES = 10
@@ -29,13 +32,13 @@ def submit_job(job_queue, job_definition, key):
             break
         except ClientError as e:
             if e.response["Error"]["Code"] == "AccessDeniedException":
-                logger.error(e)
+                logging.error(e)
                 break
             if e.response["Error"]["Code"] != "TooManyRequestsException":
                 n_tries += 1
-                logger.info("{}. Retry {}".format(e, n_tries))
+                logging.info("{}. Retry {}".format(e, n_tries))
             else:
-                logger.info("TooManyRequestsException. Sleep and retry...")
+                logging.info("TooManyRequestsException. Sleep and retry...")
 
         time.sleep(2 ** n_tries)
 
@@ -74,7 +77,7 @@ def list_objects(bucket_name):
             for obj in page["Contents"]:
                 result.append(obj["Key"])
     except botocore.exceptions.ClientError as e:
-        logger.error("Can not detect the bucket {}. Detail {}".format(bucket_name, e))
+        logging.error("Can not detect the bucket {}. Detail {}".format(bucket_name, e))
 
     return result
 
@@ -105,9 +108,10 @@ def write_message_to_tsv(queue_url, total_message):
                 break
 
         except ClientError as e:
-            logger.error(e)
+            logging.error(e)
         except KeyError:
             # Queue is empty. Check again later!!!
+            logging.info("Queue is empty!")
             time.sleep(10)
             pass
 
