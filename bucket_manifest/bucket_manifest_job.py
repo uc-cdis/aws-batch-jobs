@@ -11,7 +11,7 @@ from multiprocessing.pool import Pool
 from botocore.exceptions import ClientError
 
 logging.basicConfig(level=logging.DEBUG)
-logging.getlogging().addHandler(logging.StreamHandler(sys.stdout))
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 NUMBER_OF_THREADS = 16
 MAX_RETRIES = 10
@@ -29,6 +29,7 @@ def submit_job(job_queue, job_definition, key):
                 jobDefinition=job_definition,
                 containerOverrides={"environment": [{"value": key, "name": "KEY"}]},
             )
+            logging.info("submitting job to compute metadata of {}".format(key))
             break
         except ClientError as e:
             if e.response["Error"]["Code"] == "AccessDeniedException":
@@ -84,6 +85,7 @@ def list_objects(bucket_name):
 
 def write_message_to_tsv(queue_url, total_message):
     # Create SQS client
+    logging.info("Start consuming queue {}".format(queue_url))
     sqs = boto3.client("sqs", region_name="us-east-1")
     n_messages = 0
     while True:
