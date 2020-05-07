@@ -16,6 +16,8 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 CHUNK_SIZE = 1024 * 1024 * 10
 ACCESS_KEY_ID = os.environ["ACCESS_KEY_ID"]
 SECRET_ACCESS_KEY = os.environ["SECRET_ACCESS_KEY"]
+SQS_NAME = os.environ["SQS_NAME"]
+REGION = os.environ.get("REGION", "us-east-1")
 BUCKET = os.environ["BUCKET"]
 S3KEY = os.environ["KEY"]
 MAX_RETRIES = 3
@@ -25,6 +27,18 @@ MAX_RETRIES = 3
 
 
 def compute_object_metadata(queue_name):
+    """
+    Compute s3 object metadata and send the output to sqs
+    The bucket and the key are stored as enviroiment variables that were submitted to the job queue
+
+
+    Args:
+        queue_name(str): SQS name
+    
+    Returns:
+        None
+    """
+
     md5_hash = hashlib.md5()
     s3Client = boto3.client('s3', aws_access_key_id=ACCESS_KEY_ID, aws_secret_access_key=SECRET_ACCESS_KEY)
     n_tries = 0
@@ -62,7 +76,7 @@ def compute_object_metadata(queue_name):
     
         time.sleep(10 ** n_tries)
 
-    sqs = boto3.resource('sqs', region_name="us-east-1")
+    sqs = boto3.resource('sqs', region_name=REGION)
     # Get the queue. This returns an SQS.Queue instance
     queue = sqs.get_queue_by_name(QueueName=queue_name)
 
@@ -86,4 +100,4 @@ def compute_object_metadata(queue_name):
 
     
 if __name__ == "__main__":
-    compute_object_metadata('terraform-example-queue')
+    compute_object_metadata(SQS_NAME)
