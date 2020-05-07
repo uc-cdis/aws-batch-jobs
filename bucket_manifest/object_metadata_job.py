@@ -5,10 +5,12 @@ import os
 import boto3
 import logging
 import hashlib
+import json
 from urllib.parse import unquote_plus
+from botocore.exceptions import ClientError
 
 
-logging.basicConfig(filename="manifest_ingestion.log", level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 CHUNK_SIZE = 1024 * 1024 * 10
@@ -16,41 +18,72 @@ ACCESS_KEY_ID = os.environ["ACCESS_KEY_ID"]
 SECRET_ACCESS_KEY = os.environ["SECRET_ACCESS_KEY"]
 BUCKET = os.environ["BUCKET"]
 S3KEY = os.environ["KEY"]
-
+MAX_RETRIES = 3
 
 # a file containing a "guid" column and additional, arbitrary columns to populate
 # into the metadata service
 
-def main():
+
+def compute_object_metadata(queue_name):
     md5_hash = hashlib.md5()
     s3Client = boto3.client('s3', aws_access_key_id=ACCESS_KEY_ID, aws_secret_access_key=SECRET_ACCESS_KEY)
-    try:
-        # Assume it will succeed for now
-        response = s3Client.get_object(
-          Bucket=BUCKET,
-          Key=unquote_plus(S3KEY)
-        )
-        res = response["Body"]
-        data = res.read(CHUNK_SIZE)
-        while data:
-            md5_hash.update(data)
+    n_tries = 0
+
+    output = {}
+    while n_tries < MAX_RETRIES:
+        try:
+            response = s3Client.get_object(
+                Bucket=BUCKET,
+                Key=unquote_plus(S3KEY)
+            )
+            res = response["Body"]
             data = res.read(CHUNK_SIZE)
-        output = {"md5":  md5_hash.hexdigest(), "size": response['ContentLength']}
-    except Exception as e:
-        # If we run into any exceptions, fail this task so batch operations does not retry it and
-        # return the exception string so we can see the failure message in the final report
-        # created by batch operations.
-        raise
-    finally:
-        pass
+            while data:
+                md5_hash.update(data)
+                data = res.read(CHUNK_SIZE)
+            output = {"bucket": BUCKET, "key": S3KEY, "md5":  md5_hash.hexdigest(), "size": response['ContentLength']}
+            break
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "AccessDeniedException":
+                output = {"ERROR": "AccessDeniedException"}
+                logging.error(e)
+                break
+            if e.response["Error"]["Code"] != "TooManyRequestsException":
+                n_tries += 1
+                if n_tries == MAX_RETRIES:
+                    output = {"bucket": BUCKET, "key": S3KEY, "ERROR": "{}".format(e)}
+                logging.info("{}. Retry {}".format(e, n_tries))
+            else:
+                logging.info("TooManyRequestsException. Sleep and retry...")
+        except Exception as e:
+            n_tries += 1
+            if n_tries == MAX_RETRIES:
+                output = {"bucket": BUCKET, "key": S3KEY, "ERROR": "{}".format(e)}
+    
+        time.sleep(10 ** n_tries)
 
     sqs = boto3.resource('sqs', region_name="us-east-1")
     # Get the queue. This returns an SQS.Queue instance
-    queue = sqs.get_queue_by_name(QueueName='terraform-example-queue')
+    queue = sqs.get_queue_by_name(QueueName=queue_name)
 
-    # You can now access identifiers and attributes
-    response = queue.send_message(MessageBody='{}'.format(md5_hash.hexdigest()))
+    # send msg
+    n_tries = 0
+    while n_tries < MAX_RETRIES:
+        try
+            response = queue.send_message(MessageBody='{}'.format(json.dumps(output))
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "AccessDeniedException":
+                logging.error(e)
+                break
+            if e.response["Error"]["Code"] != "TooManyRequestsException":
+                n_tries += 1
+                logging.info("{}. Retry {}".format(e, n_tries))
+            else:
+                logging.info("TooManyRequestsException (Send message to queue). Sleep and retry...")
+        
+        time.sleep(2 ** n_tries)
+
 
     
 if __name__ == "__main__":
-    main()
+    compute_object_metadata('terraform-example-queue')
