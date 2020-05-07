@@ -10,7 +10,7 @@ from multiprocessing.pool import Pool
 
 from botocore.exceptions import ClientError
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 NUMBER_OF_THREADS = 16
@@ -120,7 +120,7 @@ def write_messages_to_tsv(queue_url, n_total_messages):
                 receipt_handle = message["ReceiptHandle"]
                 # Delete received message from queue
                 sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
-                print(message)
+                logging.info(json.loads(message["Body"]))
 
             if n_messages >= n_total_messages:
                 break
@@ -131,7 +131,7 @@ def write_messages_to_tsv(queue_url, n_total_messages):
             # Queue is empty. Check again later!!!
             logging.info("Queue is empty!")
             time.sleep(10)
-    
+
     logging.info("DONE!!!")
 
 

@@ -2,6 +2,7 @@
 """
 import sys
 import os
+import time
 import boto3
 import logging
 import hashlib
@@ -40,22 +41,26 @@ def compute_object_metadata(queue_name):
     """
 
     md5_hash = hashlib.md5()
-    s3Client = boto3.client('s3', aws_access_key_id=ACCESS_KEY_ID, aws_secret_access_key=SECRET_ACCESS_KEY)
+    s3Client = boto3.client(
+        "s3", aws_access_key_id=ACCESS_KEY_ID, aws_secret_access_key=SECRET_ACCESS_KEY
+    )
     n_tries = 0
 
     output = {}
     while n_tries < MAX_RETRIES:
         try:
-            response = s3Client.get_object(
-                Bucket=BUCKET,
-                Key=unquote_plus(S3KEY)
-            )
+            response = s3Client.get_object(Bucket=BUCKET, Key=unquote_plus(S3KEY))
             res = response["Body"]
             data = res.read(CHUNK_SIZE)
             while data:
                 md5_hash.update(data)
                 data = res.read(CHUNK_SIZE)
-            output = {"bucket": BUCKET, "key": S3KEY, "md5":  md5_hash.hexdigest(), "size": response['ContentLength']}
+            output = {
+                "bucket": BUCKET,
+                "key": S3KEY,
+                "md5": md5_hash.hexdigest(),
+                "size": response["ContentLength"],
+            }
             break
         except ClientError as e:
             if e.response["Error"]["Code"] == "AccessDeniedException":
@@ -73,10 +78,10 @@ def compute_object_metadata(queue_name):
             n_tries += 1
             if n_tries == MAX_RETRIES:
                 output = {"bucket": BUCKET, "key": S3KEY, "ERROR": "{}".format(e)}
-    
+
         time.sleep(10 ** n_tries)
 
-    sqs = boto3.resource('sqs', region_name=REGION)
+    sqs = boto3.resource("sqs", region_name=REGION)
     # Get the queue. This returns an SQS.Queue instance
     queue = sqs.get_queue_by_name(QueueName=queue_name)
 
@@ -84,7 +89,8 @@ def compute_object_metadata(queue_name):
     n_tries = 0
     while n_tries < MAX_RETRIES:
         try:
-            response = queue.send_message(MessageBody='{}'.format(json.dumps(output)))
+            response = queue.send_message(MessageBody="{}".format(json.dumps(output)))
+            break
         except ClientError as e:
             if e.response["Error"]["Code"] == "AccessDeniedException":
                 logging.error(e)
@@ -93,11 +99,12 @@ def compute_object_metadata(queue_name):
                 n_tries += 1
                 logging.info("{}. Retry {}".format(e, n_tries))
             else:
-                logging.info("TooManyRequestsException (Send message to queue). Sleep and retry...")
-        
+                logging.info(
+                    "TooManyRequestsException (Send message to queue). Sleep and retry..."
+                )
+
         time.sleep(2 ** n_tries)
 
 
-    
 if __name__ == "__main__":
     compute_object_metadata(SQS_NAME)
