@@ -18,6 +18,17 @@ MAX_RETRIES = 10
 
 
 def submit_job(job_queue, job_definition, key):
+    """
+    Submit job to the job queue
+
+    Args:
+        job_queue(str): job queue name
+        job_definition(str): job difinition name
+        key(str): S3 object key
+    
+    Returns:
+        None
+    """
     client = boto3.client("batch", region_name="us-east-1")
     n_tries = 0
 
@@ -52,9 +63,7 @@ def submit_jobs(job_queue, job_definition, keys):
 
 def list_objects(bucket_name):
     """
-    build object dataset for lookup with key is s3 object key and value contains
-    storage class, size and md5
-    to avoid list object operations
+    List all objects in the bucket
     """
     result = []
 
@@ -83,7 +92,15 @@ def list_objects(bucket_name):
     return result
 
 
-def write_message_to_tsv(queue_url, total_message):
+def write_messages_to_tsv(queue_url, n_total_messages):
+    """
+    Consume the sqs and write results to tsv manifest
+
+    Args:
+        queue_url(str): SQS url
+        n_total_messages(int): The expected number of messages being received
+
+    """
     # Create SQS client
     logging.info("Start consuming queue {}".format(queue_url))
     sqs = boto3.client("sqs", region_name="us-east-1")
@@ -95,7 +112,6 @@ def write_message_to_tsv(queue_url, total_message):
                 QueueUrl=queue_url,
                 AttributeNames=["SentTimestamp"],
                 MaxNumberOfMessages=1,
-                MessageAttributeNames=["All"],
                 VisibilityTimeout=0,
                 WaitTimeSeconds=0,
             )
@@ -106,7 +122,7 @@ def write_message_to_tsv(queue_url, total_message):
                 sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
                 print(message)
 
-            if n_messages >= total_message:
+            if n_messages >= n_total_messages:
                 break
 
         except ClientError as e:
@@ -115,7 +131,8 @@ def write_message_to_tsv(queue_url, total_message):
             # Queue is empty. Check again later!!!
             logging.info("Queue is empty!")
             time.sleep(10)
-            pass
+    
+    logging.info("DONE!!!")
 
 
 def parse_arguments():
@@ -137,7 +154,7 @@ if __name__ == "__main__":
     if args.action == "bucket_manifest":
         keys = list_objects(args.bucket)
         submit_jobs(args.job_queue, args.job_definition, keys)
-        write_message_to_tsv(args.sqs, len(keys))
+        write_messages_to_tsv(args.sqs, len(keys))
 
     # keys = list_objects("giangb-bucket-manifest-test")
     # submit_jobs(keys)

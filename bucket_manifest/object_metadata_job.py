@@ -84,7 +84,7 @@ def compute_object_metadata(queue_name):
     n_tries = 0
     while n_tries < MAX_RETRIES:
         try:
-            response = queue.send_message(MessageBody='{}'.format(json.dumps(output))
+            response = queue.send_message(MessageBody='{}'.format(json.dumps(output)))
         except ClientError as e:
             if e.response["Error"]["Code"] == "AccessDeniedException":
                 logging.error(e)
