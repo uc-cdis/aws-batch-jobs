@@ -1,6 +1,7 @@
 import boto3
 import json
 import time
+from functools import partial
 import argparse
 import botocore
 import logging as logger
@@ -13,7 +14,7 @@ NUMBER_OF_THREADS = 16
 MAX_RETRIES = 10
 
 
-def submit_job(key):
+def submit_job(job_queue, job_definition, key):
     client = boto3.client("batch", region_name="us-east-1")
     n_tries = 0
 
@@ -21,8 +22,8 @@ def submit_job(key):
         try:
             client.submit_job(
                 jobName="test",
-                jobQueue="giangb_batch_job_queue_name",
-                jobDefinition="batch_job_definition_name",
+                jobQueue=job_queue,
+                jobDefinition=job_definition,
                 containerOverrides={"environment": [{"value": key, "name": "KEY"}]},
             )
             break
@@ -39,9 +40,10 @@ def submit_job(key):
         time.sleep(2 ** n_tries)
 
 
-def submit_jobs(keys):
+def submit_jobs(job_queue, job_definition, keys):
+    par_submit_job = partial(submit_job, job_queue, job_definition)
     with Pool(NUMBER_OF_THREADS) as pool:
-        pool.map(submit_job, keys)
+        pool.map(par_submit_job, keys)
 
 
 def list_objects(bucket_name):
@@ -116,6 +118,8 @@ def parse_arguments():
 
     bucket_manifest_cmd = subparsers.add_parser("bucket_manifest")
     bucket_manifest_cmd.add_argument("--bucket", required=True)
+    bucket_manifest_cmd.add_argument("--job_queue", required=True)
+    bucket_manifest_cmd.add_argument("--job_definition", required=True)
     bucket_manifest_cmd.add_argument("--sqs", required=True)
     bucket_manifest_cmd.add_argument("--out-bucket", required=True)
 
@@ -126,7 +130,7 @@ if __name__ == "__main__":
     args = parse_arguments()
     if args.action == "bucket_manifest":
         keys = list_objects(args.bucket)
-        submit_jobs(keys)
+        submit_jobs(args.job_queue, args.job_definition, keys)
         write_message_to_tsv(args.sqs, len(keys))
 
     # keys = list_objects("giangb-bucket-manifest-test")
