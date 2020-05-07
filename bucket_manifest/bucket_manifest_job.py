@@ -17,6 +17,15 @@ NUMBER_OF_THREADS = 16
 MAX_RETRIES = 10
 
 
+def purge_queue(queue_url):
+    client = boto3.client("sqs", region_name="us-east-1")
+    try:
+        client.purge_queue(QueueUrl=queue_url)
+    except client.exceptions.QueueDoesNotExist as e:
+        logging.error("Queue {} does not exist".format(queue_url))
+        sys.exit(1)
+
+
 def submit_job(job_queue, job_definition, key):
     """
     Submit job to the job queue
@@ -87,7 +96,7 @@ def list_objects(bucket_name):
             for obj in page["Contents"]:
                 result.append(obj["Key"])
     except botocore.exceptions.ClientError as e:
-        logging.error("Can not detect the bucket {}. Detail {}".format(bucket_name, e))
+        logging.error("Can not list objects in the bucket {}. Detail {}".format(bucket_name, e))
 
     return result
 
@@ -152,10 +161,7 @@ def parse_arguments():
 if __name__ == "__main__":
     args = parse_arguments()
     if args.action == "bucket_manifest":
+        purge_queue(args.sqs)
         keys = list_objects(args.bucket)
         submit_jobs(args.job_queue, args.job_definition, keys)
         write_messages_to_tsv(args.sqs, len(keys))
-
-    # keys = list_objects("giangb-bucket-manifest-test")
-    # submit_jobs(keys)
-    # write_message_to_tsv("https://sqs.us-east-1.amazonaws.com/707767160287/terraform-example-queue", 1000)
