@@ -56,8 +56,8 @@ def submit_job(job_queue, job_definition, key):
             break
         except ClientError as e:
             if e.response["Error"]["Code"] == "AccessDeniedException":
-                logging.error(e)
-                break
+                logging.error("ERROR: Access denied to {}. Detail {}".format(job_queue, e))
+                sys.exit(1)
             if e.response["Error"]["Code"] != "TooManyRequestsException":
                 n_tries += 1
                 logging.info("{}. Retry {}".format(e, n_tries))
@@ -136,6 +136,8 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
                 WaitTimeSeconds=0,
             )
             n_messages += len(response["Messages"])
+            if n_messages % 10 == 0:
+                logging.info("Received {} message".format(n_messages))
             for message in response["Messages"]:
                 receipt_handle = message["ReceiptHandle"]
                 # Delete received message from queue
