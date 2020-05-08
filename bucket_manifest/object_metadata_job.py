@@ -1,5 +1,7 @@
 """
+Module for computing s3 object metadata.
 """
+
 import sys
 import os
 import time
@@ -112,4 +114,5 @@ def compute_object_metadata(queue_name):
 
 
 if __name__ == "__main__":
+    logging.info("SQS_NAME: {}".format(SQS_NAME))
     compute_object_metadata(SQS_NAME)
