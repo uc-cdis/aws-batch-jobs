@@ -11,7 +11,7 @@ from urllib.parse import unquote_plus
 from botocore.exceptions import ClientError
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 CHUNK_SIZE = 1024 * 1024 * 10

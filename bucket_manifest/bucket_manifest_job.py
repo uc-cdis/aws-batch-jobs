@@ -7,8 +7,9 @@ import argparse
 import botocore
 import logging
 from multiprocessing.pool import Pool
-
 from botocore.exceptions import ClientError
+
+import utils
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
@@ -116,7 +117,7 @@ def write_messages_to_tsv(queue_url, n_total_messages):
     n_messages = 0
     while True:
         try:
-            # n_messagesReceive message from SQS queue
+            # recive a message from SQS queue
             response = sqs.receive_message(
                 QueueUrl=queue_url,
                 AttributeNames=["SentTimestamp"],
