@@ -56,8 +56,7 @@ def compute_object_metadata(queue_name):
                 md5_hash.update(data)
                 data = res.read(CHUNK_SIZE)
             output = {
-                "bucket": BUCKET,
-                "key": S3KEY,
+                "url": "s3://{}/{}".format(BUCKET, S3KEY),
                 "md5": md5_hash.hexdigest(),
                 "size": response["ContentLength"],
             }
@@ -70,14 +69,20 @@ def compute_object_metadata(queue_name):
             if e.response["Error"]["Code"] != "TooManyRequestsException":
                 n_tries += 1
                 if n_tries == MAX_RETRIES:
-                    output = {"bucket": BUCKET, "key": S3KEY, "ERROR": "{}".format(e)}
+                    output = {
+                        "url": "s3://{}/{}".format(BUCKET, S3KEY),
+                        "ERROR": "{}".format(e),
+                    }
                 logging.info("{}. Retry {}".format(e, n_tries))
             else:
                 logging.info("TooManyRequestsException. Sleep and retry...")
         except Exception as e:
             n_tries += 1
             if n_tries == MAX_RETRIES:
-                output = {"bucket": BUCKET, "key": S3KEY, "ERROR": "{}".format(e)}
+                output = {
+                    "url": "s3://{}/{}".format(BUCKET, S3KEY),
+                    "ERROR": "{}".format(e),
+                }
 
         time.sleep(10 ** n_tries)
 

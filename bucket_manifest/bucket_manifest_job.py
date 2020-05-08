@@ -1,11 +1,13 @@
 import sys
-import boto3
-import json
 import time
+from datetime import datetime
+import json
 from functools import partial
 import argparse
+import boto3
 import botocore
 import logging
+from urllib.parse import urlparse
 from multiprocessing.pool import Pool
 from botocore.exceptions import ClientError
 
@@ -97,24 +99,32 @@ def list_objects(bucket_name):
             for obj in page["Contents"]:
                 result.append(obj["Key"])
     except botocore.exceptions.ClientError as e:
-        logging.error("Can not list objects in the bucket {}. Detail {}".format(bucket_name, e))
+        logging.error(
+            "Can not list objects in the bucket {}. Detail {}".format(bucket_name, e)
+        )
 
     return result
 
 
-def write_messages_to_tsv(queue_url, n_total_messages):
+def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
     """
     Consume the sqs and write results to tsv manifest
 
     Args:
         queue_url(str): SQS url
         n_total_messages(int): The expected number of messages being received
-
+        bucket_name(str): bucket for uploading the manifest
     """
+    with open("./creds.json") as creds_file:
+        creds = json.load(creds_file)
+        aws_access_key_id = creds.get("aws_access_key_id")
+        aws_secret_access_key = creds.get("aws_secret_access_key")
+
     # Create SQS client
     logging.info("Start consuming queue {}".format(queue_url))
     sqs = boto3.client("sqs", region_name="us-east-1")
     n_messages = 0
+    files = []
     while True:
         try:
             # recive a message from SQS queue
@@ -130,7 +140,7 @@ def write_messages_to_tsv(queue_url, n_total_messages):
                 receipt_handle = message["ReceiptHandle"]
                 # Delete received message from queue
                 sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
-                logging.info(json.loads(message["Body"]))
+                files.append(json.loads(message["Body"]))
 
             if n_messages >= n_total_messages:
                 break
@@ -142,6 +152,22 @@ def write_messages_to_tsv(queue_url, n_total_messages):
             logging.info("Queue is empty!")
             time.sleep(10)
 
+    if len(files) > 0:
+        parts = urlparse(files[0]["url"])
+        now = datetime.now()
+        current_time = now.strftime("%m_%d_%y_%H:%M:%S")
+        filename = "manifest_{}_{}.tsv".format(parts.netloc, current_time)
+        utils.write_csv(filename, files, ["url", "size", "md5"])
+        utils.upload_file(
+            filename,
+            bucket_name,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+        )
+        logging.info(
+            "Output manifest is stored at s3://{}//{}".format(bucket_name, filename)
+        )
+
     logging.info("DONE!!!")
 
 
@@ -149,7 +175,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(title="action", dest="action")
 
-    bucket_manifest_cmd = subparsers.add_parser("bucket_manifest")
+    bucket_manifest_cmd = subparsers.add_parser("create_manifest")
     bucket_manifest_cmd.add_argument("--bucket", required=True)
     bucket_manifest_cmd.add_argument("--job_queue", required=True)
     bucket_manifest_cmd.add_argument("--job_definition", required=True)
@@ -161,8 +187,8 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    if args.action == "bucket_manifest":
+    if args.action == "create_manifest":
         purge_queue(args.sqs)
         keys = list_objects(args.bucket)
         submit_jobs(args.job_queue, args.job_definition, keys)
-        write_messages_to_tsv(args.sqs, len(keys))
+        write_messages_to_tsv(args.sqs, len(keys), args.bucket)
