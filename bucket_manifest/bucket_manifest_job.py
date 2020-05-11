@@ -202,7 +202,7 @@ def parse_arguments():
     bucket_manifest_cmd.add_argument("--job_queue", required=True)
     bucket_manifest_cmd.add_argument("--job_definition", required=True)
     bucket_manifest_cmd.add_argument("--sqs", required=True)
-    bucket_manifest_cmd.add_argument("--out-bucket", required=True)
+    bucket_manifest_cmd.add_argument("--out_bucket", required=True)
 
     return parser.parse_args()
 
@@ -213,4 +213,4 @@ if __name__ == "__main__":
         purge_queue(args.sqs)
         keys = list_objects(args.bucket)
         submit_jobs(args.job_queue, args.job_definition, keys)
-        write_messages_to_tsv(args.sqs, len(keys), args.bucket)
+        write_messages_to_tsv(args.sqs, len(keys), args.out_bucket)
