@@ -1,7 +1,7 @@
 """
 Module for submitting jobs to job queue and consuming SQS to generate a bucket manifest
 """
-
+import os
 import sys
 import time
 from datetime import datetime
@@ -23,15 +23,17 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 NUMBER_OF_THREADS = 16
 MAX_RETRIES = 10
 
+REGION = os.environ.get("REGION", "us-east-1")
+
 
 def purge_queue(queue_url):
     """
     Remove all messages in the queue
     """
-    client = boto3.client("sqs", region_name="us-east-1")
+    client = boto3.client("sqs", region_name=REGION)
     try:
         client.purge_queue(QueueUrl=queue_url)
-    except client.exceptions.QueueDoesNotExist as e:
+    except client.exceptions.QueueDoesNotExist:
         logging.error("Queue {} does not exist".format(queue_url))
         sys.exit(1)
 
@@ -48,13 +50,13 @@ def submit_job(job_queue, job_definition, key):
     Returns:
         None
     """
-    client = boto3.client("batch", region_name="us-east-1")
+    client = boto3.client("batch", region_name=REGION)
     n_tries = 0
 
     while n_tries < MAX_RETRIES:
         try:
             client.submit_job(
-                jobName="test",
+                jobName="bucket_manifest",
                 jobQueue=job_queue,
                 jobDefinition=job_definition,
                 containerOverrides={"environment": [{"value": key, "name": "KEY"}]},
@@ -93,7 +95,7 @@ def list_objects(bucket_name):
 
     client = boto3.client(
         "s3",
-        region_name="us-east-1",
+        region_name=REGION,
         aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key,
     )
@@ -129,7 +131,7 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
 
     logging.info("Start consuming queue {}".format(queue_url))
     # Create SQS client
-    sqs = boto3.client("sqs", region_name="us-east-1")
+    sqs = boto3.client("sqs", region_name=REGION)
 
     n_messages = 0
     files = []
