@@ -148,7 +148,7 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
 
             n_messages += len(response["Messages"])
             if n_messages % 10 == 0:
-                logging.info("Received {} messages".format(n_messages))
+                logging.info("Received {}/{} messages".format(n_messages, n_total_messages))
 
             for message in response["Messages"]:
                 msgBody = json.loads(message["Body"])
