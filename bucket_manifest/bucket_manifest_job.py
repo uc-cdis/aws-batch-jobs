@@ -44,7 +44,7 @@ def submit_job(job_queue, job_definition, key):
 
     Args:
         job_queue(str): job queue name
-        job_definition(str): job difinition name
+        job_definition(str): job definition name
         key(str): S3 object key
     
     Returns:
@@ -135,7 +135,7 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
 
     n_messages = 0
     files = []
-    while True:
+    while n_messages < n_total_messages:
         try:
             # recive a message from SQS queue
             response = sqs.receive_message(
@@ -161,9 +161,6 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
                 # Delete received message from queue
                 receipt_handle = message["ReceiptHandle"]
                 sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
-
-            if n_messages >= n_total_messages:
-                break
 
         except ClientError as e:
             logging.error(e)
@@ -198,11 +195,11 @@ def parse_arguments():
     subparsers = parser.add_subparsers(title="action", dest="action")
 
     bucket_manifest_cmd = subparsers.add_parser("create_manifest")
-    bucket_manifest_cmd.add_argument("--bucket", required=True)
-    bucket_manifest_cmd.add_argument("--job_queue", required=True)
-    bucket_manifest_cmd.add_argument("--job_definition", required=True)
-    bucket_manifest_cmd.add_argument("--sqs", required=True)
-    bucket_manifest_cmd.add_argument("--out_bucket", required=True)
+    bucket_manifest_cmd.add_argument("--bucket", required=True, help="s3 bucket name to generate manifest for")
+    bucket_manifest_cmd.add_argument("--job_queue", required=True, help="The name of s3 job queue")
+    bucket_manifest_cmd.add_argument("--job_definition", required=True, help="The name of the job definition")
+    bucket_manifest_cmd.add_argument("--sqs", required=True, help="The name of SQS")
+    bucket_manifest_cmd.add_argument("--out_bucket", required=True, help="The name of the bucket which the output manifest is put to")
 
     return parser.parse_args()
 

@@ -3,8 +3,8 @@ Place to store all aws batch jobs
 
 ## Bucket-manifest
 
-`object_metadat_job.py` is a cript to compute object metadata
-`bucket_manifesgt_job.py` is a script to submit jobs to the job queue and consume the SQS
+`object_metadata_job.py` is a cript to compute object metadata
+`bucket_manifest_job.py` is a script to submit jobs to the job queue and consume the SQS
 
 The job definition is described below. 
 ```

@@ -1,17 +1,7 @@
 import csv
-import random
-from datetime import datetime
-import string
 import logging
 import boto3
 from botocore.exceptions import ClientError
-
-
-def randomString(stringLength=10):
-    """Generate a random string of fixed length """
-
-    letters = string.ascii_lowercase
-    return "".join(random.choice(letters) for i in range(stringLength))
 
 
 def write_csv(filename, files, fieldnames=None):
@@ -54,13 +44,17 @@ def upload_file(
     aws_access_key_id=None,
     aws_secret_access_key=None,
 ):
-    """Upload a file to an S3 bucket
-    :param file_name: File to upload
-    :param bucket: Bucket to upload to
-    :param object_name: S3 object name. If not specified then file_name is used
-    :aws_access_key_id: string
-    :aws_secret_access_key: string
-    :return: True if file was uploaded, else False
+    """
+    Upload a file to an S3 bucket
+    
+    Args:
+        file_name: File to upload
+        bucket: Bucket to upload to
+        object_name: S3 object name. If not specified then file_name is used
+        aws_access_key_id: string
+        aws_secret_access_key: string
+    Returns:
+        Bool: True if file was uploaded, else False
     """
     # If S3 object_name was not specified, use file_name
     if object_name is None:

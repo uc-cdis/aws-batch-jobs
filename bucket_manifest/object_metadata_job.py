@@ -16,7 +16,7 @@ from botocore.exceptions import ClientError
 logging.basicConfig(level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
-CHUNK_SIZE = 1024 * 1024 * 10
+CHUNK_SIZE = os.environ.get("CHUNK_SIZE", 1024 * 1024 * 10)
 ACCESS_KEY_ID = os.environ["ACCESS_KEY_ID"]
 SECRET_ACCESS_KEY = os.environ["SECRET_ACCESS_KEY"]
 SQS_NAME = os.environ["SQS_NAME"]
@@ -32,7 +32,7 @@ MAX_RETRIES = 3
 def compute_object_metadata(queue_name):
     """
     Compute s3 object metadata and send the output to sqs
-    The bucket and the key are stored as enviroiment variables that were submitted to the job queue
+    The bucket and the key are stored as environment variables that were submitted to the job queue
 
 
     Args:
