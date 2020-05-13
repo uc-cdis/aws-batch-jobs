@@ -17,12 +17,12 @@ logging.basicConfig(level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 CHUNK_SIZE = os.environ.get("CHUNK_SIZE", 1024 * 1024 * 10)
-ACCESS_KEY_ID = os.environ["ACCESS_KEY_ID"]
-SECRET_ACCESS_KEY = os.environ["SECRET_ACCESS_KEY"]
-SQS_NAME = os.environ["SQS_NAME"]
+ACCESS_KEY_ID = os.environ.get("ACCESS_KEY_ID")
+SECRET_ACCESS_KEY = os.environ.get("SECRET_ACCESS_KEY")
+SQS_NAME = os.environ.get("SQS_NAME")
 REGION = os.environ.get("REGION", "us-east-1")
-BUCKET = os.environ["BUCKET"]
-S3KEY = os.environ["KEY"]
+BUCKET = os.environ.get("BUCKET")
+S3KEY = os.environ.get("KEY")
 MAX_RETRIES = 3
 
 # a file containing a "guid" column and additional, arbitrary columns to populate
