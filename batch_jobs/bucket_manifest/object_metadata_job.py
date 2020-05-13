@@ -25,8 +25,9 @@ BUCKET = os.environ.get("BUCKET")
 S3KEY = os.environ.get("KEY")
 MAX_RETRIES = 3
 
-# a file containing a "guid" column and additional, arbitrary columns to populate
-# into the metadata service
+
+def run_job():
+    compute_object_metadata(SQS_NAME)
 
 
 def compute_object_metadata(queue_name):
@@ -111,8 +112,3 @@ def compute_object_metadata(queue_name):
                 )
 
         time.sleep(2 ** n_tries)
-
-
-if __name__ == "__main__":
-    logging.info("SQS_NAME: {}".format(SQS_NAME))
-    compute_object_metadata(SQS_NAME)

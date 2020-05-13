@@ -7,7 +7,6 @@ import time
 from datetime import datetime
 import json
 from functools import partial
-import argparse
 import logging
 from multiprocessing.pool import Pool
 
@@ -15,7 +14,7 @@ from urllib.parse import urlparse
 import boto3
 from botocore.exceptions import ClientError
 
-from . import utils
+from ..utils import utils
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
@@ -24,6 +23,13 @@ NUMBER_OF_THREADS = 16
 MAX_RETRIES = 10
 
 REGION = os.environ.get("REGION", "us-east-1")
+
+
+def run_job(bucket, job_queue, job_definition, sqs, out_bucket):
+    purge_queue(sqs)
+    keys = list_objects(bucket)
+    submit_jobs(job_queue, job_definition, keys)
+    write_messages_to_tsv(sqs, len(keys), out_bucket)
 
 
 def purge_queue(queue_url):
@@ -65,7 +71,9 @@ def submit_job(job_queue, job_definition, key):
             break
         except ClientError as e:
             if e.response["Error"]["Code"] == "AccessDeniedException":
-                logging.error("ERROR: Access denied to {}. Detail {}".format(job_queue, e))
+                logging.error(
+                    "ERROR: Access denied to {}. Detail {}".format(job_queue, e)
+                )
                 sys.exit(1)
             if e.response["Error"]["Code"] != "TooManyRequestsException":
                 n_tries += 1
@@ -148,7 +156,9 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
 
             n_messages += len(response["Messages"])
             if n_messages % 10 == 0:
-                logging.info("Received {}/{} messages".format(n_messages, n_total_messages))
+                logging.info(
+                    "Received {}/{} messages".format(n_messages, n_total_messages)
+                )
 
             for message in response["Messages"]:
                 msgBody = json.loads(message["Body"])
@@ -176,7 +186,7 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
 
         filename = "manifest_{}_{}.tsv".format(parts.netloc, current_time)
         utils.write_csv(filename, files, ["url", "size", "md5"])
-    
+
         utils.upload_file(
             filename,
             bucket_name,
@@ -188,26 +198,3 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
         )
 
     logging.info("DONE!!!")
-
-
-def parse_arguments():
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(title="action", dest="action")
-
-    bucket_manifest_cmd = subparsers.add_parser("create_manifest")
-    bucket_manifest_cmd.add_argument("--bucket", required=True, help="s3 bucket name to generate manifest for")
-    bucket_manifest_cmd.add_argument("--job_queue", required=True, help="The name of s3 job queue")
-    bucket_manifest_cmd.add_argument("--job_definition", required=True, help="The name of the job definition")
-    bucket_manifest_cmd.add_argument("--sqs", required=True, help="The name of SQS")
-    bucket_manifest_cmd.add_argument("--out_bucket", required=True, help="The name of the bucket which the output manifest is put to")
-
-    return parser.parse_args()
-
-
-if __name__ == "__main__":
-    args = parse_arguments()
-    if args.action == "create_manifest":
-        purge_queue(args.sqs)
-        keys = list_objects(args.bucket)
-        submit_jobs(args.job_queue, args.job_definition, keys)
-        write_messages_to_tsv(args.sqs, len(keys), args.out_bucket)
