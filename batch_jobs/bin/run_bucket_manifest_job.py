@@ -1,4 +1,5 @@
 import argparse
+import settings
 
 from batch_jobs.bucket_manifest.bucket_manifest_job import run_job
 

@@ -7,4 +7,4 @@ COPY . /bucket-manifest
 WORKDIR /bucket-manifest
 
 ENTRYPOINT [ "python" ]
-CMD [ "batch_jobs/bin/object_metadata_job.py" ]
+CMD [ "batch_jobs/bin/run_object_metadata_job.py" ]
