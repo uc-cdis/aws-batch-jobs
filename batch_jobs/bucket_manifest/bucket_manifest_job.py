@@ -54,7 +54,7 @@ def submit_job(job_queue, job_definition, key):
         key(str): S3 object key
     
     Returns:
-        None
+        bool: True if the job was submitted successfully
     """
     client = boto3.client("batch", region_name=REGION)
     n_tries = 0
@@ -68,7 +68,7 @@ def submit_job(job_queue, job_definition, key):
                 containerOverrides={"environment": [{"value": key, "name": "KEY"}]},
             )
             logging.info("submitting job to compute metadata of {}".format(key))
-            break
+            return True
         except ClientError as e:
             if e.response["Error"]["Code"] == "AccessDeniedException":
                 logging.error(
@@ -82,6 +82,7 @@ def submit_job(job_queue, job_definition, key):
                 logging.info("TooManyRequestsException. Sleep and retry...")
 
         time.sleep(2 ** n_tries)
+    return False
 
 
 def submit_jobs(job_queue, job_definition, keys):
@@ -123,20 +124,20 @@ def list_objects(bucket_name):
     return result
 
 
-def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
+def get_messages_from_queue(queue_url, n_total_messages):
     """
-    Consume the sqs and write results to tsv manifest
-
     Args:
         queue_url(str): SQS url
         n_total_messages(int): The expected number of messages being received
-        bucket_name(str): bucket for uploading the manifest to
+    
+    Returns:
+        list(dict): list of message in the format of
+        {
+            "url": "url_example",
+            "md5": "md5_example",
+            "size": 10
+        }
     """
-    with open("./creds.json") as creds_file:
-        creds = json.load(creds_file)
-        aws_access_key_id = creds.get("aws_access_key_id")
-        aws_secret_access_key = creds.get("aws_secret_access_key")
-
     logging.info("Start consuming queue {}".format(queue_url))
     # Create SQS client
     sqs = boto3.client("sqs", region_name=REGION)
@@ -145,7 +146,7 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
     files = []
     while n_messages < n_total_messages:
         try:
-            # recive a message from SQS queue
+            # receive a message from SQS queue
             response = sqs.receive_message(
                 QueueUrl=queue_url,
                 AttributeNames=["SentTimestamp"],
@@ -153,14 +154,13 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
                 VisibilityTimeout=0,
                 WaitTimeSeconds=0,
             )
-
-            n_messages += len(response["Messages"])
             if n_messages % 10 == 0:
                 logging.info(
                     "Received {}/{} messages".format(n_messages, n_total_messages)
                 )
 
             for message in response["Messages"]:
+                n_messages += 1
                 msgBody = json.loads(message["Body"])
                 if "ERROR" in msgBody:
                     msgBody["size"] = 0
@@ -178,6 +178,24 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
             # Queue is empty. Check again later!!!
             logging.info("SQS queue is empty. Taking a sleep ....")
             time.sleep(10)
+    return files
+
+
+def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
+    """
+    Consume the sqs and write results to tsv manifest
+
+    Args:
+        queue_url(str): SQS url
+        n_total_messages(int): The expected number of messages being received
+        bucket_name(str): bucket for uploading the manifest to
+    """
+    files = get_messages_from_queue(queue_url, n_total_messages)
+
+    with open("./creds.json") as creds_file:
+        creds = json.load(creds_file)
+        aws_access_key_id = creds.get("aws_access_key_id")
+        aws_secret_access_key = creds.get("aws_secret_access_key")
 
     if len(files) > 0:
         parts = urlparse(files[0]["url"])

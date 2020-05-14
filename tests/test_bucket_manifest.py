@@ -1,14 +1,126 @@
 import pytest
-from batch_jobs.bucket_manifest.object_metadata_job import compute_object_metadata
+from unittest.mock import MagicMock, patch
+
+import boto3
+
+from botocore.stub import Stubber, ANY
+
+from contextlib import contextmanager
 
 
-def test1(monkeypatch):
+from moto import mock_sqs, mock_s3
+import moto.s3.models as s3model
+
+
+from botocore.exceptions import ClientError
+
+from batch_jobs.bucket_manifest.object_metadata_job import (
+    compute_object_metadata,
+    send_message,
+)
+from batch_jobs.bucket_manifest.bucket_manifest_job import (
+    get_messages_from_queue,
+    write_messages_to_tsv,
+    submit_job,
+    list_objects,
+)
+
+
+@contextmanager
+def mock_file(filepath, content=""):
+    with open(filepath, "w") as f:
+        f.write(content)
+    yield filepath
+    try:
+        os.remove(filepath)
+    except Exception:
+        pass
+
+
+def test_compute_object_metadata_success(monkeypatch, s3):
 
     monkeypatch.setattr(
-        "batch_jobs.bucket_manifest.object_metadata_job.ACCESS_KEY_ID", "ACCESS_KEY_ID"
+        "batch_jobs.bucket_manifest.object_metadata_job.BUCKET", "test_bucket"
     )
     monkeypatch.setattr(
-        "batch_jobs.bucket_manifest.object_metadata_job.SECRET_ACCESS_KEY",
-        "SECRET_ACCESS_KEY",
+        "batch_jobs.bucket_manifest.object_metadata_job.S3KEY", "test_key"
     )
-    pass
+
+    monkeypatch.setattr("batch_jobs.bucket_manifest.object_metadata_job.MAX_RETRIES", 1)
+    output = compute_object_metadata()
+    assert output == {
+        "url": "s3://test_bucket/test_key",
+        "md5": "d9673f3128fcfbd70d040f7dc18afbd8",
+        "size": 7,
+    }
+
+
+def test_compute_object_metadata_fail_due_to_wrong_key(monkeypatch, s3):
+
+    monkeypatch.setattr(
+        "batch_jobs.bucket_manifest.object_metadata_job.BUCKET", "test_bucket"
+    )
+    monkeypatch.setattr(
+        "batch_jobs.bucket_manifest.object_metadata_job.S3KEY", "test_key2"
+    )
+
+    monkeypatch.setattr("batch_jobs.bucket_manifest.object_metadata_job.MAX_RETRIES", 1)
+    output = compute_object_metadata()
+    assert output == {
+        "url": "s3://test_bucket/test_key2",
+        "ERROR": "An error occurred (NoSuchKey) when calling the GetObject operation: The specified key does not exist.",
+    }
+
+
+def test_send_message_success(create_mock_sqs):
+    assert send_message("test", {})
+
+
+def test_send_message_fail_due_to_queue_not_exit(create_mock_sqs):
+    with pytest.raises(ClientError):
+        send_message("test2", {})
+
+
+def test_receive_message_from_sqs(create_mock_sqs):
+    sqs = boto3.resource("sqs", region_name="us-east-1")
+    queue = sqs.get_queue_by_name(QueueName="test")
+    files = get_messages_from_queue(queue.url, 1)
+
+    assert files == [
+        {
+            "md5": "d9673f3128fcfbd70d040f7dc18afbd1",
+            "size": 10,
+            "url": "s3://test_bucket/test_key",
+        }
+    ]
+
+
+def test_list_object(s3):
+    with mock_file(
+        "./creds.json", '{"aws_access_key_id": "test", "aws_secret_access_key": "test"}'
+    ):
+        assert list_objects("test_bucket") == ["test_key"]
+
+
+def test_submit_jobs_success(monkeypatch):
+    monkeypatch.setattr("batch_jobs.bucket_manifest.bucket_manifest_job.MAX_RETRIES", 1)
+    client = boto3.client("batch", region_name="us-east-1")
+    stubber = Stubber(client)
+    stubber.add_response(
+        "submit_job", service_response={"jobName": "bucket_manifest", "jobId": "123"}
+    )
+    boto3.client = MagicMock()
+    boto3.client.return_value = client
+    with stubber:
+        assert submit_job("test", "rest", "key")
+
+
+def test_submit_jobs_fail(monkeypatch):
+    monkeypatch.setattr("batch_jobs.bucket_manifest.bucket_manifest_job.MAX_RETRIES", 1)
+    client = boto3.client("batch", region_name="us-east-1")
+    stubber = Stubber(client)
+    stubber.add_client_error("submit_job")
+    boto3.client = MagicMock()
+    boto3.client.return_value = client
+    with stubber:
+        assert submit_job("test", "rest", "key") == False

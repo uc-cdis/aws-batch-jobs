@@ -7,10 +7,8 @@ cache: pip
 
 install:
   - pip install -r requirements.txt
+  - pip install -r dev-requirements.txt
   - if [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then pip install -e git+https://git@github.com/uc-cdis/wool.git#egg=wool; fi
-
-before_script:
-  - sudo rm -f /etc/boto.cfg
 
 script:
   - py.test -vv tests/
