@@ -9,8 +9,8 @@ from moto import mock_sqs, mock_s3
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 fake_message1 = {
-    "md5": "d9673f3128fcfbd70d040f7dc18afbd1",
-    "size": 10,
+    "md5": "d9673f3128fcfbd70d040f7dc18afbd8",
+    "size": 7,
     "url": "s3://test_bucket/test_key",
 }
 

@@ -79,8 +79,8 @@ def test_receive_message_from_sqs(create_mock_sqs):
 
     assert files == [
         {
-            "md5": "d9673f3128fcfbd70d040f7dc18afbd1",
-            "size": 10,
+            "md5": "d9673f3128fcfbd70d040f7dc18afbd8",
+            "size": 7,
             "url": "s3://test_bucket/test_key",
         }
     ]
