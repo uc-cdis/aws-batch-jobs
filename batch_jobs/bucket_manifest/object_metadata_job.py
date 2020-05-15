@@ -1,7 +1,6 @@
 """
 Module for computing s3 object metadata.
 """
-
 import sys
 import os
 import time
@@ -27,6 +26,10 @@ MAX_RETRIES = 3
 
 
 def run_job():
+    """
+    Run the job to compute object metadata.
+    The bucket and the key are stored as environment variables.
+    """
     output = compute_object_metadata()
     send_message(SQS_NAME, output)
 

@@ -26,6 +26,18 @@ REGION = os.environ.get("REGION", "us-east-1")
 
 
 def run_job(bucket, job_queue, job_definition, sqs, out_bucket):
+    """
+    Start to run an job to generate bucket manifest
+    Args:
+        bucket(str): bucket name
+        job_queue(str): job queue name
+        job_definition(str): job definition name
+        sqs(str): SQS url
+        out_bucket(str): the bucket which the manifest is saved to
+    
+    Returns:
+        bool: True if the job was submitted successfully
+    """
     purge_queue(sqs)
     keys = list_objects(bucket)
     submit_jobs(job_queue, job_definition, keys)
@@ -34,7 +46,7 @@ def run_job(bucket, job_queue, job_definition, sqs, out_bucket):
 
 def purge_queue(queue_url):
     """
-    Remove all messages in the queue
+    Remove all messages in the SQS queue
     """
     client = boto3.client("sqs", region_name=REGION)
     try:
@@ -86,6 +98,17 @@ def submit_job(job_queue, job_definition, key):
 
 
 def submit_jobs(job_queue, job_definition, keys):
+    """
+    Submit jobs to the queue
+
+    Args:
+        job_queue(str): job queue name
+        job_definition(str): job definition name
+        keys(list(str)): list of object keys
+    
+    Returns:
+        None
+    """
     par_submit_job = partial(submit_job, job_queue, job_definition)
     with Pool(NUMBER_OF_THREADS) as pool:
         pool.map(par_submit_job, keys)
@@ -94,6 +117,12 @@ def submit_jobs(job_queue, job_definition, keys):
 def list_objects(bucket_name):
     """
     List all objects in the bucket
+
+    Args:
+        bucket_name(str): the bucket name
+
+    Returns:
+        list(str): list of the objects
     """
     result = []
 

@@ -1,17 +1,9 @@
 import pytest
-from unittest.mock import MagicMock, patch
-
-import boto3
-
-from botocore.stub import Stubber, ANY
-
+from unittest.mock import MagicMock
 from contextlib import contextmanager
 
-
-from moto import mock_sqs, mock_s3
-import moto.s3.models as s3model
-
-
+import boto3
+from botocore.stub import Stubber
 from botocore.exceptions import ClientError
 
 from batch_jobs.bucket_manifest.object_metadata_job import (
@@ -20,7 +12,6 @@ from batch_jobs.bucket_manifest.object_metadata_job import (
 )
 from batch_jobs.bucket_manifest.bucket_manifest_job import (
     get_messages_from_queue,
-    write_messages_to_tsv,
     submit_job,
     list_objects,
 )

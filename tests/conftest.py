@@ -49,13 +49,3 @@ def s3(mock_env):
         s3_client.put_object(Bucket="test_bucket", Key="test_key", Body="Awesome")
         yield
 
-
-# @contextmanager
-# def mock_file(filepath, content=''):
-#     with open(filepath, 'w') as f:
-#         f.write(content)
-#     yield filepath
-#     try:
-#         os.remove(filepath)
-#     except Exception:
-#         pass
