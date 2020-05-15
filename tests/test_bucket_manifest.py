@@ -67,7 +67,7 @@ def test_send_message_success(create_mock_sqs):
     assert send_message("test", {})
 
 
-def test_send_message_fail_due_to_queue_not_exit(create_mock_sqs):
+def test_send_message_fail_due_to_queue_not_exist(create_mock_sqs):
     with pytest.raises(ClientError):
         send_message("test2", {})
 
