@@ -13,7 +13,7 @@ from botocore.exceptions import ClientError
 
 
 logging.basicConfig(level=logging.INFO)
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+#logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 CHUNK_SIZE = os.environ.get("CHUNK_SIZE", 1024 * 1024 * 10)
 ACCESS_KEY_ID = os.environ.get("ACCESS_KEY_ID")
