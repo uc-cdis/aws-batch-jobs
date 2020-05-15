@@ -15,7 +15,7 @@ fake_message1 = {
 }
 
 fake_message2 = {
-    "md5": "d9673f3128fcfbd70d040f7dc18afbd8",
+    "md5": "d9673f3128fcfbd70d040f7dc18afaaa",
     "size": 11,
     "url": "s3://test_bucket/test_key2",
 }
