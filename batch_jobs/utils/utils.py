@@ -4,9 +4,9 @@ import boto3
 from botocore.exceptions import ClientError
 
 
-def write_csv(filename, files, fieldnames=None):
+def write_tsv(filename, files, fieldnames=None):
     """
-    write to csv file
+    write to tsv file
     Args:
         filename(str): file name
         files(list(dict)): list of file info

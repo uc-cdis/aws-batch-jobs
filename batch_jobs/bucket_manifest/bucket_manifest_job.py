@@ -232,7 +232,7 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
         current_time = now.strftime("%m_%d_%y_%H:%M:%S")
 
         filename = "manifest_{}_{}.tsv".format(parts.netloc, current_time)
-        utils.write_csv(filename, files, ["url", "size", "md5"])
+        utils.write_tsv(filename, files, ["url", "size", "md5"])
 
         utils.upload_file(
             filename,
