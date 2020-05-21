@@ -17,7 +17,7 @@ from botocore.exceptions import ClientError
 from ..utils import utils
 
 logging.basicConfig(level=logging.INFO)
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+#logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 NUMBER_OF_THREADS = 16
 MAX_RETRIES = 10
