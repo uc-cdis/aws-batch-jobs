@@ -126,7 +126,7 @@ def list_objects(bucket_name):
     """
     result = []
 
-    with open("./creds.json") as creds_file:
+    with open("/bucket-manifest/creds.json") as creds_file:
         creds = json.load(creds_file)
         aws_access_key_id = creds.get("aws_access_key_id")
         aws_secret_access_key = creds.get("aws_secret_access_key")
@@ -221,7 +221,7 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
     """
     files = get_messages_from_queue(queue_url, n_total_messages)
 
-    with open("./creds.json") as creds_file:
+    with open("/bucket-manifest/creds.json") as creds_file:
         creds = json.load(creds_file)
         aws_access_key_id = creds.get("aws_access_key_id")
         aws_secret_access_key = creds.get("aws_secret_access_key")
