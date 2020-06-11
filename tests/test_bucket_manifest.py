@@ -1,3 +1,4 @@
+import os
 import pytest
 from unittest.mock import MagicMock
 from contextlib import contextmanager
@@ -84,13 +85,6 @@ def test_receive_message_from_sqs(create_mock_sqs):
             "url": "s3://test_bucket/test_key",
         }
     ]
-
-
-def test_list_object(s3):
-    with mock_file(
-        "./creds.json", '{"aws_access_key_id": "test", "aws_secret_access_key": "test"}'
-    ):
-        assert list_objects("test_bucket") == ["test_key"]
 
 
 def test_submit_jobs_success(monkeypatch):
