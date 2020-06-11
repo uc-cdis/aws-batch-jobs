@@ -32,6 +32,9 @@ def write_tsv(filename, files, fieldnames=None):
         writer.writeheader()
 
         for f in files:
+            for field in fieldnames:
+                if field not in f:
+                    f[field] = None
             writer.writerow(f)
 
     return filename

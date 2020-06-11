@@ -6,6 +6,7 @@ import sys
 import time
 from datetime import datetime
 import json
+import csv
 from functools import partial
 import logging
 from multiprocessing.pool import Pool
@@ -17,7 +18,7 @@ from botocore.exceptions import ClientError
 from ..utils import utils
 
 logging.basicConfig(level=logging.INFO)
-#logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+# logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 NUMBER_OF_THREADS = 16
 MAX_RETRIES = 10
@@ -25,7 +26,7 @@ MAX_RETRIES = 10
 REGION = os.environ.get("REGION", "us-east-1")
 
 
-def run_job(bucket, job_queue, job_definition, sqs, out_bucket):
+def run_job(bucket, job_queue, job_definition, sqs, out_bucket, authz_file=None):
     """
     Start to run an job to generate bucket manifest
     Args:
@@ -41,7 +42,7 @@ def run_job(bucket, job_queue, job_definition, sqs, out_bucket):
     purge_queue(sqs)
     keys = list_objects(bucket)
     submit_jobs(job_queue, job_definition, keys)
-    write_messages_to_tsv(sqs, len(keys), out_bucket)
+    write_messages_to_tsv(sqs, len(keys), out_bucket, authz_file)
 
 
 def purge_queue(queue_url):
@@ -210,7 +211,7 @@ def get_messages_from_queue(queue_url, n_total_messages):
     return files
 
 
-def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
+def write_messages_to_tsv(queue_url, n_total_messages, bucket_name, authz_file=None):
     """
     Consume the sqs and write results to tsv manifest
 
@@ -218,13 +219,47 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
         queue_url(str): SQS url
         n_total_messages(int): The expected number of messages being received
         bucket_name(str): bucket for uploading the manifest to
+        authz_file(str): authz data file
     """
     files = get_messages_from_queue(queue_url, n_total_messages)
 
+    aws_access_key_id, aws_secret_access_key = None, None
     with open("/bucket-manifest/creds.json") as creds_file:
         creds = json.load(creds_file)
         aws_access_key_id = creds.get("aws_access_key_id")
         aws_secret_access_key = creds.get("aws_secret_access_key")
+
+    authz_objects = {}
+    # Default filenames without merging
+    fields = ["url", "size", "md5"]
+
+    # merge authz info from file
+    if authz_file:
+        with open(authz_file, "rt") as csvfile:
+            csvReader = csv.DictReader(csvfile, delimiter="\t")
+            # Build a map with url as the key
+            for row in csvReader:
+                if "url" in row:
+                    authz_objects[row["url"]] = {
+                        k: v for k, v in row.items() if k != "url"
+                    }
+
+        # do merging if possible, and update fields
+        need_merge = False
+        first_row_need_merge = None
+        for row_num, fi in enumerate(files):
+            if fi["url"] in authz_objects:
+                need_merge = True
+                first_row_need_merge = first_row_need_merge or row_num
+                for k, v in authz_objects[fi["url"]].items():
+                    fi[k] = v
+        if files and need_merge:
+            # add new fields
+            [
+                fields.append(k)
+                for k in files[first_row_need_merge].keys()
+                if k not in ["url", "size", "md5"]
+            ]
 
     if len(files) > 0:
         parts = urlparse(files[0]["url"])
@@ -232,7 +267,7 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
         current_time = now.strftime("%m_%d_%y_%H:%M:%S")
 
         filename = "manifest_{}_{}.tsv".format(parts.netloc, current_time)
-        utils.write_tsv(filename, files, ["url", "size", "md5"])
+        utils.write_tsv(filename, files, fields)
 
         utils.upload_file(
             filename,
