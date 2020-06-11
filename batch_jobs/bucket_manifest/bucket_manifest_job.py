@@ -18,7 +18,7 @@ from botocore.exceptions import ClientError
 from ..utils import utils
 
 logging.basicConfig(level=logging.INFO)
-#logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+# logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 NUMBER_OF_THREADS = 16
 MAX_RETRIES = 10
@@ -222,13 +222,13 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name, authz_file=N
         authz_file(str): authz data file
     """
     files = get_messages_from_queue(queue_url, n_total_messages)
-    
+
     aws_access_key_id, aws_secret_access_key = None, None
     with open("/bucket-manifest/creds.json") as creds_file:
         creds = json.load(creds_file)
         aws_access_key_id = creds.get("aws_access_key_id")
         aws_secret_access_key = creds.get("aws_secret_access_key")
-    
+
     authz_objects = {}
     # Default filenames without merging
     fields = ["url", "size", "md5"]
@@ -240,7 +240,9 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name, authz_file=N
             # Build a map with url as the key
             for row in csvReader:
                 if "url" in row:
-                    authz_objects[row["url"]] = {k: v for k, v in row.items() if k != "url"}
+                    authz_objects[row["url"]] = {
+                        k: v for k, v in row.items() if k != "url"
+                    }
 
         # do merging if possible, and update fields
         need_merge = False
@@ -253,8 +255,12 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name, authz_file=N
                     fi[k] = v
         if files and need_merge:
             # add new fields
-            [fields.append(k) for k in files[first_row_need_merge].keys() if k not in ["url", "size", "md5"]]
-                
+            [
+                fields.append(k)
+                for k in files[first_row_need_merge].keys()
+                if k not in ["url", "size", "md5"]
+            ]
+
     if len(files) > 0:
         parts = urlparse(files[0]["url"])
         now = datetime.now()

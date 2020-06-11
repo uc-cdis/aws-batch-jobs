@@ -25,9 +25,7 @@ def parse_arguments():
         help="The name of the bucket which the output manifest is put to",
     )
     bucket_manifest_cmd.add_argument(
-        "--authz",
-        required=False,
-        help="The file contains authz",
+        "--authz", required=False, help="The file contains authz"
     )
 
     return parser.parse_args()
@@ -37,5 +35,10 @@ if __name__ == "__main__":
     args = parse_arguments()
     if args.action == "create_manifest":
         run_job(
-            args.bucket, args.job_queue, args.job_definition, args.sqs, args.out_bucket, args.authz
+            args.bucket,
+            args.job_queue,
+            args.job_definition,
+            args.sqs,
+            args.out_bucket,
+            args.authz,
         )
