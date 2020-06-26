@@ -100,7 +100,7 @@ def submit_jobs(source_bucket, destination_bucket, job_queue, job_definition, ke
     Returns:
         None
     """
-    par_submit_job = partial(submit_job, source_bucket, destination_bucket, job_queue, job_definition, keys)
+    par_submit_job = partial(submit_job, source_bucket, destination_bucket, job_queue, job_definition)
     with Pool(NUMBER_OF_THREADS) as pool:
         pool.map(par_submit_job, keys)
 
