@@ -30,7 +30,7 @@ if __name__ == "__main__":
     if args.action == "replicate-bucket":
         run_job(
             args.source_bucket,
-            args.destinatino_bucket,
+            args.destination_bucket,
             args.job_queue,
             args.job_definition,
         )
