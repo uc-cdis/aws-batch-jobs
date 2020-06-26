@@ -27,7 +27,7 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    if args.action == "replicate_bucket":
+    if args.action == "replicate-bucket":
         run_job(
             args.source_bucket,
             args.destinatino_bucket,
