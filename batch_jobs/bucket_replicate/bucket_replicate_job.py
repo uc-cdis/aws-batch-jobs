@@ -128,9 +128,6 @@ def list_objects(bucket_name):
     except IOError as e:
         logging.warn(f"Can not read /bucket-replicate/creds.json. Detail {str(e)}")
 
-            creds = json.load(creds_file)
-            aws_access_key_id = creds.get("aws_access_key_id")
-            aws_secret_access_key = creds.get("aws_secret_access_key")
 
     client = boto3.client(
         "s3",
