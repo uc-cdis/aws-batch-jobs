@@ -117,7 +117,17 @@ def list_objects(bucket_name):
     """
     result = []
 
+aws_access_key_id = None
+aws_secret_access_key = None
+try:
     with open("/bucket-replicate/creds.json") as creds_file:
+        creds = json.load(creds_file)
+        aws_access_key_id = creds.get("aws_access_key_id")
+        aws_secret_access_key = creds.get("aws_secret_access_key")
+    
+except IOError as e:
+    logging.warn(f"Can not read /bucket-replicate/creds.json. Detail {str(e)}")
+
         creds = json.load(creds_file)
         aws_access_key_id = creds.get("aws_access_key_id")
         aws_secret_access_key = creds.get("aws_secret_access_key")
@@ -142,4 +152,3 @@ def list_objects(bucket_name):
         )
 
     return result
-
