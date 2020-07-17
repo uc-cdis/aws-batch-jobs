@@ -18,6 +18,7 @@ logging.basicConfig(level=logging.INFO)
 CHUNK_SIZE = os.environ.get("CHUNK_SIZE", 1024 * 1024 * 10)
 ACCESS_KEY_ID = os.environ.get("ACCESS_KEY_ID")
 SECRET_ACCESS_KEY = os.environ.get("SECRET_ACCESS_KEY")
+AWS_SESSION_TOKEN = os.environ.get("AWS_SESSION_TOKEN")
 SQS_NAME = os.environ.get("SQS_NAME")
 REGION = os.environ.get("REGION", "us-east-1")
 BUCKET = os.environ.get("BUCKET")
@@ -44,7 +45,7 @@ def compute_object_metadata():
     n_tries = 0
 
     s3Client = boto3.client(
-        "s3", aws_access_key_id=ACCESS_KEY_ID, aws_secret_access_key=SECRET_ACCESS_KEY
+        "s3", aws_access_key_id=ACCESS_KEY_ID, aws_secret_access_key=SECRET_ACCESS_KEY, aws_session_token=AWS_SESSION_TOKEN
     )
 
     output = {}
