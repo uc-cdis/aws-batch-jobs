@@ -35,7 +35,12 @@ def write_tsv(filename, files, fieldnames=None):
             for field in fieldnames:
                 if field not in f:
                     f[field] = None
-            writer.writerow(f)
+            try:
+                writer.writerow(f)
+            except Exception as e:
+                logging.info(f"fieldnames {fieldnames}")
+                logging.error(f)
+                raise e
 
     return filename
 
