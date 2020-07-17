@@ -131,12 +131,14 @@ def list_objects(bucket_name):
         creds = json.load(creds_file)
         aws_access_key_id = creds.get("aws_access_key_id")
         aws_secret_access_key = creds.get("aws_secret_access_key")
+        aws_session_token = creds.get("aws_session_token")
 
     client = boto3.client(
         "s3",
         region_name=REGION,
         aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key,
+        aws_session_token=aws_session_token
     )
 
     try:
@@ -226,8 +228,8 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name, authz_file=N
     aws_access_key_id, aws_secret_access_key = None, None
     with open("/bucket-manifest/creds.json") as creds_file:
         creds = json.load(creds_file)
-        aws_access_key_id = creds.get("aws_access_key_id")
-        aws_secret_access_key = creds.get("aws_secret_access_key")
+        # aws_access_key_id = creds.get("aws_access_key_id")
+        # aws_secret_access_key = creds.get("aws_secret_access_key")
 
     authz_objects = {}
     # Default filenames without merging
@@ -272,8 +274,8 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name, authz_file=N
         utils.upload_file(
             filename,
             bucket_name,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
+            #aws_access_key_id=aws_access_key_id,
+            #aws_secret_access_key=aws_secret_access_key,
         )
         logging.info(
             "Output manifest is stored at s3://{}/{}".format(bucket_name, filename)
