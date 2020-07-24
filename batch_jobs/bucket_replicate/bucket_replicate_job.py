@@ -147,18 +147,16 @@ def list_objects(bucket_name):
             aws_secret_access_key=aws_secret_access_key,
         )
 
-        try:
-            paginator = client.get_paginator("list_objects_v2")
-            logging.info("start to list objects in {}".format(bucket_name))
-            pages = paginator.paginate(Bucket=bucket_name, RequestPayer="requester")
-            for page in pages:
-                for obj in page["Contents"]:
-                    result.append(obj["Key"])
-        except ClientError as e:
-            logging.error(
-                "Can not list objects in the bucket {}. Detail {}".format(
-                    bucket_name, e
-                )
-            )
+    try:
+        paginator = client.get_paginator("list_objects_v2")
+        logging.info("start to list objects in {}".format(bucket_name))
+        pages = paginator.paginate(Bucket=bucket_name, RequestPayer="requester")
+        for page in pages:
+            for obj in page["Contents"]:
+                result.append(obj["Key"])
+    except ClientError as e:
+        logging.error(
+            "Can not list objects in the bucket {}. Detail {}".format(bucket_name, e)
+        )
 
-        return result
+    return result
