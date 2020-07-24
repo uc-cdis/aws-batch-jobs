@@ -48,4 +48,3 @@ def s3(mock_env):
         s3_client = boto3.client("s3")
         s3_client.put_object(Bucket="test_bucket", Key="test_key", Body="Awesome")
         yield
-

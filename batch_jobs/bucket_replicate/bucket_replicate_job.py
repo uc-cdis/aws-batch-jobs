@@ -35,7 +35,7 @@ def run_job(source_bucket, destination_bucket, job_queue, job_definition):
         job_queue(str): job queue name
         job_definition(str): job definition name
 
-    
+
     Returns:
         bool: True if the job was submitted successfully
     """
@@ -53,7 +53,7 @@ def submit_job(source_bucket, destination_bucket, job_queue, job_definition, key
         job_queue(str): job queue name
         job_definition(str): job definition name
         key(str): S3 object key
-    
+
     Returns:
         bool: True if the job was submitted successfully
     """
@@ -66,7 +66,13 @@ def submit_job(source_bucket, destination_bucket, job_queue, job_definition, key
                 jobName="bucket_replicate",
                 jobQueue=job_queue,
                 jobDefinition=job_definition,
-                containerOverrides={"environment": [{"value": key, "name": "KEY"},{"value": source_bucket, "name": "SOURCE_BUCKET"},{"value": destination_bucket, "name": "DESTINATION_BUCKET"}]},
+                containerOverrides={
+                    "environment": [
+                        {"value": key, "name": "KEY"},
+                        {"value": source_bucket, "name": "SOURCE_BUCKET"},
+                        {"value": destination_bucket, "name": "DESTINATION_BUCKET"},
+                    ]
+                },
             )
             logging.info("submitting job to copy file {}".format(key))
             return True
@@ -96,11 +102,13 @@ def submit_jobs(source_bucket, destination_bucket, job_queue, job_definition, ke
         job_queue(str): job queue name
         job_definition(str): job definition name
         keys(list(str)): list of object keys
-    
+
     Returns:
         None
     """
-    par_submit_job = partial(submit_job, source_bucket, destination_bucket, job_queue, job_definition)
+    par_submit_job = partial(
+        submit_job, source_bucket, destination_bucket, job_queue, job_definition
+    )
     with Pool(NUMBER_OF_THREADS) as pool:
         pool.map(par_submit_job, keys)
 
@@ -117,6 +125,7 @@ def list_objects(bucket_name):
     """
     result = []
 
+
 aws_access_key_id = None
 aws_secret_access_key = None
 try:
@@ -124,13 +133,13 @@ try:
         creds = json.load(creds_file)
         aws_access_key_id = creds.get("aws_access_key_id")
         aws_secret_access_key = creds.get("aws_secret_access_key")
-    
+
 except IOError as e:
     logging.warn(f"Can not read /bucket-replicate/creds.json. Detail {str(e)}")
 
-        creds = json.load(creds_file)
-        aws_access_key_id = creds.get("aws_access_key_id")
-        aws_secret_access_key = creds.get("aws_secret_access_key")
+    creds = json.load(creds_file)
+    aws_access_key_id = creds.get("aws_access_key_id")
+    aws_secret_access_key = creds.get("aws_secret_access_key")
 
     client = boto3.client(
         "s3",

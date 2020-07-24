@@ -35,7 +35,7 @@ def run_job(bucket, job_queue, job_definition, sqs, out_bucket, authz_file=None)
         job_definition(str): job definition name
         sqs(str): SQS url
         out_bucket(str): the bucket which the manifest is saved to
-    
+
     Returns:
         bool: True if the job was submitted successfully
     """
@@ -65,7 +65,7 @@ def submit_job(job_queue, job_definition, key):
         job_queue(str): job queue name
         job_definition(str): job definition name
         key(str): S3 object key
-    
+
     Returns:
         bool: True if the job was submitted successfully
     """
@@ -106,7 +106,7 @@ def submit_jobs(job_queue, job_definition, keys):
         job_queue(str): job queue name
         job_definition(str): job definition name
         keys(list(str)): list of object keys
-    
+
     Returns:
         None
     """
@@ -138,7 +138,7 @@ def list_objects(bucket_name):
         region_name=REGION,
         aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key,
-        aws_session_token=aws_session_token
+        aws_session_token=aws_session_token,
     )
 
     try:
@@ -161,7 +161,7 @@ def get_messages_from_queue(queue_url, n_total_messages):
     Args:
         queue_url(str): SQS url
         n_total_messages(int): The expected number of messages being received
-    
+
     Returns:
         list(dict): list of message in the format of
         {
@@ -265,10 +265,7 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name, authz_file=N
         filename = "manifest_{}_{}.tsv".format(parts.netloc, current_time)
         utils.write_tsv(filename, files, fields)
 
-        utils.upload_file(
-            filename,
-            bucket_name
-        )
+        utils.upload_file(filename, bucket_name)
         logging.info(
             "Output manifest is stored at s3://{}/{}".format(bucket_name, filename)
         )
