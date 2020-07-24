@@ -140,12 +140,12 @@ def list_objects(bucket_name):
         aws_access_key_id = creds.get("aws_access_key_id")
         aws_secret_access_key = creds.get("aws_secret_access_key")
 
-        client = boto3.client(
-            "s3",
-            region_name=REGION,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-        )
+    client = boto3.client(
+        "s3",
+        region_name=REGION,
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key,
+    )
 
     try:
         paginator = client.get_paginator("list_objects_v2")
