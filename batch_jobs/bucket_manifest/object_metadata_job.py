@@ -45,7 +45,10 @@ def compute_object_metadata():
     n_tries = 0
 
     s3Client = boto3.client(
-        "s3", aws_access_key_id=ACCESS_KEY_ID, aws_secret_access_key=SECRET_ACCESS_KEY, aws_session_token=AWS_SESSION_TOKEN
+        "s3",
+        aws_access_key_id=ACCESS_KEY_ID,
+        aws_secret_access_key=SECRET_ACCESS_KEY,
+        aws_session_token=AWS_SESSION_TOKEN,
     )
 
     output = {}
@@ -99,7 +102,7 @@ def send_message(queue_name, msg_body):
     Args:
         queue_name(str): SQS name
         msg_body(dict): message content
-    
+
     Returns:
         bool: True if the message was sent successfully
     """

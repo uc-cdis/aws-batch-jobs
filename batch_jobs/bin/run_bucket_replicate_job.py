@@ -10,10 +10,14 @@ def parse_arguments():
 
     bucket_manifest_cmd = subparsers.add_parser("replicate-bucket")
     bucket_manifest_cmd.add_argument(
-        "--source_bucket", required=True, help="source s3 bucket where data will be copied from"
+        "--source_bucket",
+        required=True,
+        help="source s3 bucket where data will be copied from",
     )
     bucket_manifest_cmd.add_argument(
-        "--destination_bucket", required=True, help="destination s3 bucket where data will be copied to"
+        "--destination_bucket",
+        required=True,
+        help="destination s3 bucket where data will be copied to",
     )
     bucket_manifest_cmd.add_argument(
         "--job_queue", required=True, help="The name of s3 job queue"
