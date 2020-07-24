@@ -125,39 +125,40 @@ def list_objects(bucket_name):
     """
     result = []
 
+    aws_access_key_id = None
+    aws_secret_access_key = None
+    try:
+        with open("/bucket-replicate/creds.json") as creds_file:
+            creds = json.load(creds_file)
+            aws_access_key_id = creds.get("aws_access_key_id")
+            aws_secret_access_key = creds.get("aws_secret_access_key")
 
-aws_access_key_id = None
-aws_secret_access_key = None
-try:
-    with open("/bucket-replicate/creds.json") as creds_file:
+    except IOError as e:
+        logging.warn(f"Can not read /bucket-replicate/creds.json. Detail {str(e)}")
+
         creds = json.load(creds_file)
         aws_access_key_id = creds.get("aws_access_key_id")
         aws_secret_access_key = creds.get("aws_secret_access_key")
 
-except IOError as e:
-    logging.warn(f"Can not read /bucket-replicate/creds.json. Detail {str(e)}")
-
-    creds = json.load(creds_file)
-    aws_access_key_id = creds.get("aws_access_key_id")
-    aws_secret_access_key = creds.get("aws_secret_access_key")
-
-    client = boto3.client(
-        "s3",
-        region_name=REGION,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-    )
-
-    try:
-        paginator = client.get_paginator("list_objects_v2")
-        logging.info("start to list objects in {}".format(bucket_name))
-        pages = paginator.paginate(Bucket=bucket_name, RequestPayer="requester")
-        for page in pages:
-            for obj in page["Contents"]:
-                result.append(obj["Key"])
-    except ClientError as e:
-        logging.error(
-            "Can not list objects in the bucket {}. Detail {}".format(bucket_name, e)
+        client = boto3.client(
+            "s3",
+            region_name=REGION,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
         )
 
-    return result
+        try:
+            paginator = client.get_paginator("list_objects_v2")
+            logging.info("start to list objects in {}".format(bucket_name))
+            pages = paginator.paginate(Bucket=bucket_name, RequestPayer="requester")
+            for page in pages:
+                for obj in page["Contents"]:
+                    result.append(obj["Key"])
+        except ClientError as e:
+            logging.error(
+                "Can not list objects in the bucket {}. Detail {}".format(
+                    bucket_name, e
+                )
+            )
+
+        return result
