@@ -1,4 +1,4 @@
-FROM amazon/aws-cli
+FROM quay.io/cdis/awshelper:master
 WORKDIR /home/ubuntu
 COPY . /home/ubuntu/copy_to_cleversafe
 
