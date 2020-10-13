@@ -1,5 +1,4 @@
-FROM quay.io/cdis/awshelper:master
-
+FROM amazon/aws-cli
 COPY . /copy_to_cleversafe
 
 RUN wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-313.0.1-linux-x86_64.tar.gz
