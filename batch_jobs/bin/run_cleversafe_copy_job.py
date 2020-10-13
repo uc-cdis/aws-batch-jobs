@@ -28,6 +28,12 @@ def parse_arguments():
     cleversafe_copy_cmd.add_argument(
         "--project", required=True, help="The name of the job definition"
     )
+    cleversafe_copy_cmd.add_argument("--sqs", required=True, help="The name of SQS")
+    cleversafe_copy_cmd.add_argument(
+        "--out_bucket",
+        required=True,
+        help="The name of the bucket which the output manifest is put to",
+    )
 
     return parser.parse_args()
 
@@ -37,7 +43,8 @@ if __name__ == "__main__":
     if args.action == "cleversafe-copy":
         run_job(
             args.source_bucket,
-            args.destination_bucket,
             args.job_queue,
             args.job_definition,
+            args.sqs,
+            args.out_bucket,
         )

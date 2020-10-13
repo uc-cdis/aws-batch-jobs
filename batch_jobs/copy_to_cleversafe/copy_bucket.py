@@ -1,5 +1,3 @@
-### Kube setup job needs to setup the right stuff for job def
-
 
 """
 Module for submitting jobs to job queue and consuming SQS to generate a bucket manifest
@@ -13,7 +11,8 @@ import csv
 from functools import partial
 import logging
 from multiprocessing.pool import Pool
-
+from google.cloud import storage
+from google.auth.transport.requests import AuthorizedSession
 from urllib.parse import urlparse
 import boto3
 from botocore.exceptions import ClientError
@@ -115,7 +114,7 @@ def submit_jobs(job_queue, job_definition, keys):
     """
     par_submit_job = partial(submit_job, job_queue, job_definition)
     with Pool(NUMBER_OF_THREADS) as pool:
-        pool.map(par_submit_job, keys["Key"])
+        pool.map(par_submit_job, keys)
 
 
 def list_objects(bucket_name):
@@ -123,17 +122,15 @@ def list_objects(bucket_name):
     Compute md5 of a bucket object
     """
     # Initialize a storage client
-    client = storage.Client()
+    storage_client = storage.Client()
     # Get client authorized session
-    sess = AuthorizedSession(client._credentials)
+    sess = AuthorizedSession(storage_client._credentials)
     result = []
     # If md5 is in the object metadata. Return it and exit
     # Note: Client.list_blobs requires at least package version 1.17.0.
     blobs = storage_client.list_blobs(bucket_name)
     for blob in blobs:
-        result.append({"Key": blob.name, "Size": blob.size})
-
-        #print(f"{blob.name}, {blob.size}")
+        result.append(blob.name)
     return result
 
 def get_messages_from_queue(queue_url, n_total_messages):
@@ -205,7 +202,6 @@ def write_messages_to_tsv(queue_url, n_total_messages, bucket_name):
     """
     files = get_messages_from_queue(queue_url, n_total_messages)
 
-    authz_objects = {}
     # Default filenames without merging
     fields = ["url", "size", "md5"]
 
