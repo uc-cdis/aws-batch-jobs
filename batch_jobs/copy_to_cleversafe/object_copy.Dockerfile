@@ -1,10 +1,11 @@
-FROM python:3.6
+FROM quay.io/cdis/awshelper:master
 
-COPY . /bucket-manifest
+COPY . /copy_to_cleversafe
 
-WORKDIR /bucket-manifest
+WORKDIR /copy_to_cleversafe
 
-RUN pip install -r requirements.txt
-
-ENTRYPOINT [ "python" ]
-CMD [ "batch_jobs/bin/run_object_metadata_job.py" ]
+RUN curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-313.0.1-linux-x86_64.tar.gz
+RUN tar -xvf google-cloud-sdk-313.0.1-linux-x86_64.tar.gz
+RUN  ./google-cloud-sdk/install.sh --command-completion true --path-update true --usage-reporting false -q
+ENTRYPOINT ["/bin/bash"]
+CMD ["./batch_jobs/copy_to_cleversafe/copy_bucket.sh" ]
