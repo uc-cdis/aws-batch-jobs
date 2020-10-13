@@ -8,4 +8,4 @@ RUN ./google-cloud-sdk/install.sh --command-completion true --path-update true -
 
 WORKDIR /copy_to_cleversafe
 ENTRYPOINT ["/bin/bash"]
-CMD ["./batch_jobs/copy_to_cleversafe/copy_bucket.sh" ]
+CMD ["batch_jobs/copy_to_cleversafe/object_copy.sh" ]
