@@ -1,8 +1,9 @@
+#/bin/bash
 aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID_SQS
 aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY_SQS
-aws s3 cp s3://$TEMP_BUCKET/sa.json ./sa.json
+aws s3 cp s3://$TEMP_BUCKET/sa.json /google-sa.json
 
-gcloud auth activate-service-account --key-file sa.json
+gcloud auth activate-service-account --key-file /google-sa.json
 gcloud config set project $PROJECT
 mkdir file
 gsutil -u $PROJECT cp gs://$SOURCE_BUCKET/$KEY ./file/
