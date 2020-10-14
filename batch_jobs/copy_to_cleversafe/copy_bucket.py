@@ -1,4 +1,3 @@
-
 """
 Module for submitting jobs to job queue and consuming SQS to generate a bucket manifest
 """
@@ -28,7 +27,7 @@ MAX_RETRIES = 10
 REGION = os.environ.get("REGION", "us-east-1")
 
 
-def run_job(bucket, job_queue, job_definition, sqs, out_bucket):
+def run_job(bucket, job_queue, job_definition, sqs, out_bucket, project):
     """
     Start to run an job to generate bucket manifest
     Args:
@@ -42,7 +41,7 @@ def run_job(bucket, job_queue, job_definition, sqs, out_bucket):
         bool: True if the job was submitted successfully
     """
     purge_queue(sqs)
-    keys = list_objects(bucket)
+    keys = list_objects(bucket, project)
     submit_jobs(job_queue, job_definition, keys)
     write_messages_to_tsv(sqs, len(keys), out_bucket)
 
@@ -117,18 +116,19 @@ def submit_jobs(job_queue, job_definition, keys):
         pool.map(par_submit_job, keys)
 
 
-def list_objects(bucket_name):
+def list_objects(bucket_name,project):
     """
     Compute md5 of a bucket object
     """
     # Initialize a storage client
-    storage_client = storage.Client()
+    storage_client = storage.Client(project=project)
     # Get client authorized session
     sess = AuthorizedSession(storage_client._credentials)
     result = []
     # If md5 is in the object metadata. Return it and exit
     # Note: Client.list_blobs requires at least package version 1.17.0.
-    blobs = storage_client.list_blobs(bucket_name)
+    bucket = storage_client.bucket(bucket_name, project)
+    blobs = bucket.list_blobs()
     for blob in blobs:
         result.append(blob.name)
     return result

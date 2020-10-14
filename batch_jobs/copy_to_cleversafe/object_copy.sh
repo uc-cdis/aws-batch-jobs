@@ -8,9 +8,9 @@ gcloud config set project $PROJECT
 mkdir /home/ubuntu/file
 gsutil -u $PROJECT cp gs://$SOURCE_BUCKET/$KEY /home/ubuntu/file/
 fileName=$(ls /home/ubuntu/file/)
-md5=$(md5sum /home/ubuntu/file/$fileName)
+md5=$(md5sum /home/ubuntu/file/$fileName | cut -d ' ' -f 1)
 echo $md5
-size=$(wc -c /home/ubuntu/file/$fileName)
+size=$(wc -c /home/ubuntu/file/$fileName | cut -d ' ' -f 1)
 echo $size
 QUEUE_URL=$(aws sqs get-queue-url --queue-name=$SQS_NAME |jq -r .QueueUrl)
 #send sqs message

@@ -47,4 +47,5 @@ if __name__ == "__main__":
             args.job_definition,
             args.sqs,
             args.out_bucket,
+            args.project,
         )
