@@ -53,14 +53,20 @@ def run_job(source_bucket, manifest, mapping, job_queue, job_definition):
                 print(f'Column names are {"  ".join(row)}')
                 line_count += 1
             else:
-                if submit_job(
-                    source_bucket,
-                    dest_mapping[row["project_id"]],
-                    job_queue,
-                    job_definition,
-                    row["url"],
-                ):
-                    success += 1
+                try:
+                    destination_bucket = dest_mapping[row["project_id"]]
+                    if submit_job(
+                        source_bucket,
+                        destination_bucket,
+                        job_queue,
+                        job_definition,
+                        row["url"],
+                    ):
+                        success += 1
+                except KeyError:
+                    logging.error(
+                        f"ERROR: No job submitted for record with id {row['id']} because there is not destination bucket in {mapping} for project_id {row['project_id']}"
+                    )
                 line_count += 1
                 total += 1
     logging.info("Success/Total: {}/{}".format(success, total))
