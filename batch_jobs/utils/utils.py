@@ -54,7 +54,7 @@ def upload_file(
 ):
     """
     Upload a file to an S3 bucket
-    
+
     Args:
         file_name: File to upload
         bucket: Bucket to upload to
