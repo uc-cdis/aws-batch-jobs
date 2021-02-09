@@ -50,10 +50,11 @@ def run_job(source_bucket, manifest, mapping, job_queue, job_definition):
         s3.meta.client.download_file(source_bucket, mapping, "/tmp/{}".format(mapping))
     except Exception as e:
         logging.error(
-            "ERROR: failed to download {} or {} from source bucket ({}). Job not started".format(
-                manifest, mapping, source_bucket
+            "ERROR: failed to download {} or {} from source bucket ({}). Job not started\n [{}]".format(
+                manifest, mapping, source_bucket, e
             )
         )
+        return 0
     with open(mapping) as map_file:
         dest_mapping = json.load(map_file)
         print(dest_mapping)
