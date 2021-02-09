@@ -42,6 +42,18 @@ def run_job(source_bucket, manifest, mapping, job_queue, job_definition):
     """
     total = 0
     success = 0
+    s3 = boto3.resource("s3")
+    try:
+        s3.meta.client.download_file(
+            source_bucket, manifest, "/tmp/{}".format(manifest)
+        )
+        s3.meta.client.download_file(source_bucket, mapping, "/tmp/{}".format(mapping))
+    except Exception as e:
+        logging.error(
+            "ERROR: failed to download {} or {} from source bucket ({}). Job not started".format(
+                manifest, mapping, source_bucket
+            )
+        )
     with open(mapping) as map_file:
         dest_mapping = json.load(map_file)
         print(dest_mapping)
