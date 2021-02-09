@@ -40,9 +40,22 @@ def run_job(source_bucket, manifest, mapping, job_queue, job_definition):
     Returns:
         int: return the number of jobs submitted successfully
     """
-    total = 0
-    success = 0
-    s3 = boto3.resource(
+    aws_access_key_id = None
+    aws_secret_access_key = None
+    try:
+        with open("/dcf-bucket-replicate/creds.json") as creds_file:
+            creds = json.load(creds_file)
+            aws_access_key_id = creds.get("aws_access_key_id")
+            aws_secret_access_key = creds.get("aws_secret_access_key")
+
+    except IOError as e:
+        logging.warn(f"Can not read /dcf-bucket-replicate/creds.json. Detail {str(e)}")
+
+        creds = json.load(creds_file)
+        aws_access_key_id = creds.get("aws_access_key_id")
+        aws_secret_access_key = creds.get("aws_secret_access_key")
+
+    client = boto3.client(
         "s3",
         region_name=REGION,
         aws_access_key_id=aws_access_key_id,
@@ -60,6 +73,9 @@ def run_job(source_bucket, manifest, mapping, job_queue, job_definition):
             )
         )
         return 0
+
+    total = 0
+    success = 0
     with open(mapping) as map_file:
         dest_mapping = json.load(map_file)
         print(dest_mapping)
