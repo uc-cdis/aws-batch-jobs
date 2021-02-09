@@ -76,13 +76,11 @@ def run_job(source_bucket, manifest, mapping, job_queue, job_definition):
     success = 0
     with open("/tmp/{}".format(mapping)) as map_file:
         dest_mapping = json.load(map_file)
-        print(dest_mapping)
     with open("/tmp/{}".format(manifest)) as man_file:
         csv_reader = csv.DictReader(man_file, delimiter="\t")
         line_count = 0
         for row in csv_reader:
             if line_count == 0:
-                print(f'Column names are {"  ".join(row)}')
                 line_count += 1
             else:
                 try:
@@ -136,7 +134,11 @@ def submit_job(source_bucket, destination_bucket, job_queue, job_definition, key
                     ]
                 },
             )
-            logging.info("submitting job to copy file {}".format(key))
+            logging.info(
+                "submitting job to copy file {} to destination bucket {}".format(
+                    key, destination_bucket
+                )
+            )
             return True
         except ClientError as e:
             if e.response["Error"]["Code"] == "AccessDeniedException":
