@@ -66,7 +66,7 @@ def run_job(source_bucket, manifest, mapping, job_queue, job_definition):
         client.download_file(source_bucket, mapping, "/tmp/{}".format(mapping))
     except Exception as e:
         logging.error(
-            "ERROR: failed to download {} or {} from source bucket ({}). Job not started\n [{}]".format(
+            "ERROR: failed to download {} or {} from source bucket ({}). Job not started\nDetail [{}]".format(
                 manifest, mapping, source_bucket, e
             )
         )
