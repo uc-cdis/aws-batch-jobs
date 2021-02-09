@@ -62,10 +62,8 @@ def run_job(source_bucket, manifest, mapping, job_queue, job_definition):
         aws_secret_access_key=aws_secret_access_key,
     )
     try:
-        s3.meta.client.download_file(
-            source_bucket, manifest, "/tmp/{}".format(manifest)
-        )
-        s3.meta.client.download_file(source_bucket, mapping, "/tmp/{}".format(mapping))
+        client.download_file(source_bucket, manifest, "/tmp/{}".format(manifest))
+        client.download_file(source_bucket, mapping, "/tmp/{}".format(mapping))
     except Exception as e:
         logging.error(
             "ERROR: failed to download {} or {} from source bucket ({}). Job not started\n [{}]".format(
