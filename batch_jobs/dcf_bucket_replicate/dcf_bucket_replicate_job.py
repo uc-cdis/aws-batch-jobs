@@ -74,10 +74,10 @@ def run_job(source_bucket, manifest, mapping, job_queue, job_definition):
 
     total = 0
     success = 0
-    with open(mapping) as map_file:
+    with open("/tmp/{}".format(mapping)) as map_file:
         dest_mapping = json.load(map_file)
         print(dest_mapping)
-    with open(manifest) as man_file:
+    with open("/tmp/{}".format(manifest)) as man_file:
         csv_reader = csv.DictReader(man_file, delimiter="\t")
         line_count = 0
         for row in csv_reader:
