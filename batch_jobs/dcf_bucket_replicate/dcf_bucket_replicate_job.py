@@ -42,7 +42,12 @@ def run_job(source_bucket, manifest, mapping, job_queue, job_definition):
     """
     total = 0
     success = 0
-    s3 = boto3.resource("s3")
+    s3 = boto3.resource(
+        "s3",
+        region_name=REGION,
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key,
+    )
     try:
         s3.meta.client.download_file(
             source_bucket, manifest, "/tmp/{}".format(manifest)
