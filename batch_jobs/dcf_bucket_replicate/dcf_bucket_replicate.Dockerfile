@@ -1,4 +1,4 @@
-FROM python:3.6
+FROM FROM quay.io/cdis/python-nginx:pybase3-1.4.2
 
 COPY . /dcf-bucket-replicate
 

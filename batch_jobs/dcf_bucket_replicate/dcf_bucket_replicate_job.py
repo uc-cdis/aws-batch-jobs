@@ -93,13 +93,17 @@ def run_job(source_bucket, manifest, mapping, job_queue, job_definition):
                         row["url"],
                     ):
                         success += 1
+                    else:
+                        logging.error(
+                            f"ERROR: job submition failed for record with id {row['id']}"
+                        )
                 except KeyError:
                     logging.error(
                         f"ERROR: No job submitted for record with id {row['id']} because there is not destination bucket in {mapping} for project_id {row['project_id']}"
                     )
                 line_count += 1
                 total += 1
-    logging.info("Success/Total: {} / {}".format(success, total))
+    logging.info("Success/Total: {}/{}".format(success, total))
     return success
 
 
@@ -134,7 +138,11 @@ def submit_job(source_bucket, destination_bucket, job_queue, job_definition, key
                     ]
                 },
             )
-            logging.info("submitting job to copy file {}".format(key))
+            logging.info(
+                "submitting job to copy file {} to destination bucket {}".format(
+                    key, destination_bucket
+                )
+            )
             return True
         except ClientError as e:
             if e.response["Error"]["Code"] == "AccessDeniedException":
