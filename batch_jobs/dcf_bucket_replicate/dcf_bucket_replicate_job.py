@@ -82,6 +82,7 @@ def run_job(source_bucket, manifest, mapping, job_queue, job_definition):
         for row in csv_reader:
             if line_count == 0:
                 line_count += 1
+                print(row)
             else:
                 try:
                     destination_bucket = dest_mapping[row["project_id"]]
