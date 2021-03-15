@@ -126,7 +126,7 @@ def submit_job(source_bucket, destination_bucket, job_queue, job_definition, key
 
     while n_tries < MAX_RETRIES:
         try:
-            logging.info("{} -> {}".format(source_bucket, destination_bucket))
+            logging.info("{} -> {} ".format(source_bucket, destination_bucket))
             client.submit_job(
                 jobName="dcf_bucket_replicate",
                 jobQueue=job_queue,
