@@ -103,7 +103,7 @@ def run_job(source_bucket, manifest, mapping, job_queue, job_definition):
                     )
                 line_count += 1
                 total += 1
-    logging.info("Success/Total: {}/{} ".format(success, total))
+    logging.info("Success/Total: {}/{}".format(success, total))
     return success
 
 
