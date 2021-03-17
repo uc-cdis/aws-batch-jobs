@@ -47,7 +47,6 @@ def run_job(source_bucket, manifest, mapping, job_queue, job_definition):
             creds = json.load(creds_file)
             aws_access_key_id = creds.get("aws_access_key_id")
             aws_secret_access_key = creds.get("aws_secret_access_key")
-
     except IOError as e:
         logging.warn(f"Can not read /dcf-bucket-replicate/creds.json. Detail {str(e)}")
 
@@ -80,6 +79,7 @@ def run_job(source_bucket, manifest, mapping, job_queue, job_definition):
         csv_reader = csv.DictReader(man_file, delimiter="\t")
         line_count = 0
         for row in csv_reader:
+            # Skip column names
             if line_count == 0:
                 line_count += 1
             else:
