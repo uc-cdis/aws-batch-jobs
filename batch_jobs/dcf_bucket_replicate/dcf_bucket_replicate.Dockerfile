@@ -7,4 +7,4 @@ WORKDIR /dcf-bucket-replicate
 RUN pip3 install awscli
 RUN pip install -r requirements.txt
 
-CMD ["sh","-c","bash /batch_jobs/dcf_bucket_replicate/object_copy_job.sh"]
+CMD ["sh","-c","bash object_copy_job.sh"]
