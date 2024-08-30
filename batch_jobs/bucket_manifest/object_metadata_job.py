@@ -54,7 +54,7 @@ def compute_object_metadata():
     output = {}
     while n_tries < MAX_RETRIES:
         try:
-            response = s3Client.get_object(Bucket=BUCKET, Key=unquote_plus(S3KEY))
+            response = s3Client.get_object(Bucket=BUCKET, Key=unquote_plus(S3KEY), RequestPayer='requester')
             res = response["Body"]
             data = res.read(CHUNK_SIZE)
             while data:
