@@ -1,4 +1,4 @@
-FROM python:3.9-slim-bullseye
+FROM python:3.12.7-slim-bullseye
 
 COPY . /bucket-replicate
 
