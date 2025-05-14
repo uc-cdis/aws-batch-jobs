@@ -9,9 +9,10 @@ RUN yum install -y curl tar gzip && \
 
 FROM amazon/aws-cli
 
-COPY --from=downloader /tmp/mount-s3 /usr/local/bin/mount-s3
-
 COPY . /bucket-replicate
+
+COPY --from=downloader /tmp/mount-s3 /bucket-replicate/mount-s3
+
 WORKDIR /bucket-replicate
 
 RUN mkdir -p mnt
