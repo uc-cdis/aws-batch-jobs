@@ -3,7 +3,7 @@ name: Build Jenkins images
 on:
   push:
     paths:
-      - .github/workflows/image_build_push.yaml
+      - .github/workflows/image_build_and_push.yaml
       - batch_jobs/**
 
 jobs:
