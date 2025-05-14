@@ -4,7 +4,7 @@ COPY . /bucket-replicate
 
 WORKDIR /bucket-replicate
 
-RUN wget https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.tar.gz
+RUN curl -O https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.tar.gz
 RUN tar -xzf mount-s3.tar.gz
 RUN rm mount-s3.tar.gz
 RUN chmod +x mount-s3
