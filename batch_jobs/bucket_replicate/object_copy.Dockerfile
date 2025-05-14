@@ -5,7 +5,7 @@ COPY . /bucket-replicate
 WORKDIR /bucket-replicate
 
 RUN curl -fsSL https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.deb \
-      -o /tmp/mount-s3.rpm && \
+      -o /tmp/mount-s3.deb && \
     apt-get install /tmp/mount-s3.deb && \
     rm -f /tmp/mount-s3.deb
 
