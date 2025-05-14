@@ -1,14 +1,19 @@
+FROM amazonlinux:2 AS downloader
+
+RUN yum install -y curl tar && \
+    curl -fsSL https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.tar.gz \
+      -o /tmp/mount-s3.tar.gz && \
+    tar -xzf /tmp/mount-s3.tar.gz -C /tmp && \
+    chmod +x /tmp/mount-s3
+
 FROM amazon/aws-cli
 
-COPY . /bucket-replicate
+COPY --from=downloader /tmp/mount-s3 /usr/local/bin/mount-s3
 
+COPY . /bucket-replicate
 WORKDIR /bucket-replicate
 
-RUN curl -O https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.tar.gz
-RUN tar -xzf mount-s3.tar.gz
-RUN rm mount-s3.tar.gz
-RUN chmod +x mount-s3
-RUN mkdir ./mnt
+RUN mkdir -p mnt
 
 ENTRYPOINT ["/bin/bash"]
-CMD ["./batch_jobs/bucket_replicate/object_copy_job.sh" ]
+CMD ["./batch_jobs/bucket_replicate/object_copy_job.sh"]
