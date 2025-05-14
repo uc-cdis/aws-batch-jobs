@@ -3,7 +3,9 @@
 aws configure set aws_access_key_id $ACCESS_KEY_ID
 aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
 
-/bucket-replicate/mount-s3 $DESTINATION_BUCKET ./mnt
+mount-s3 $DESTINATION_BUCKET ./mnt
+
+mkdir -p "$(dirname "$DESTINATION_BUCKET")"
 
 # Copy the file locally from the GDC bucket
 echo "testfile" > ./mnt/$KEY
