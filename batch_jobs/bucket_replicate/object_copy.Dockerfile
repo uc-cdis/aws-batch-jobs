@@ -1,9 +1,9 @@
 FROM amazonlinux:2 AS downloader
 
-RUN yum install -y curl tar && \
-    curl -fsSL https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.tar.gz \
-      -o /tmp/mount-s3.tar.gz && \
-    tar -xzf /tmp/mount-s3.tar.gz -C /tmp && \
+RUN yum install -y curl tar
+RUN curl -fsSL https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.tar.gz \
+      -o /tmp/mount-s3.tar.gz
+RUN tar -xzf /tmp/mount-s3.tar.gz -C /tmp && \
     chmod +x /tmp/mount-s3
 
 FROM amazon/aws-cli
