@@ -11,8 +11,6 @@ RUN curl -fsSL https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/moun
     apt-get install /tmp/mount-s3.deb -y && \
     rm -f /tmp/mount-s3.deb
 
-USER ubuntu
-
 RUN mkdir -p mnt
 
 ENTRYPOINT ["/bin/bash"]
