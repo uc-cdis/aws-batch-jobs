@@ -9,4 +9,9 @@ mkdir -p "./mnt/$(dirname "$KEY")"
 
 # Copy the file locally from the GDC bucket
 echo "testfile" > ./mnt/$KEY
+
+
 # <gdc download> ./mnt/$KEY
+curl --location 'https://api.gdc.cancer.gov/data/'$ID'' \
+--header 'X-Auth-Token: '$GDC_TOKEN'' \
+--output ./mnt/$KEY
