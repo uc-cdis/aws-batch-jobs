@@ -3,12 +3,12 @@
 aws configure set aws_access_key_id $ACCESS_KEY_ID
 aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
 
-mount-s3 $DESTINATION_BUCKET ./mnt
+mount-s3 $DESTINATION_BUCKET ./mnt --allow-overwrite flag
 
 mkdir -p "./mnt/$(dirname "$KEY")"
 
 # Copy the file locally from the GDC bucket
-echo "testfile" > ./mnt/$KEY
+#echo "testfile" > ./mnt/$KEY
 
 
 # <gdc download> ./mnt/$KEY
