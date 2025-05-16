@@ -17,29 +17,9 @@ NUMBER_OF_THREADS = 16
 MAX_RETRIES = 10
 
 REGION = os.environ.get("REGION", "us-east-1")
-parsed_data = [
-    {
-        "id": "3dc0e394-dd06-4e7d-b85b-dac258c1ed95",
-        "file_name": "TCGA-YL-A8SA-01Z-00-DX1.B246D547-9875-42DB-8BD9-206C449EF089.svs",
-        "size": "3007580564",
-        "destination_bucket": "bucket-1",
-    },
-    {
-        "id": "3dc0e394-dd06-4e7d-b85b-dac258c1ed95",
-        "file_name": "TCGA-YL-A8SA-01Z-00-DX1.B246D547-9875-42DB-8BD9-206C449EF089.svs",
-        "size": "3007580564",
-        "destination_bucket": "bucket-2",
-    },
-    {
-        "id": "3dc0e394-dd06-4e7d-b85b-dac258c1ed95",
-        "file_name": "TCGA-YL-A8SA-01Z-00-DX1.B246D547-9875-42DB-8BD9-206C449EF089.svs",
-        "size": "3007580564",
-        "destination_bucket": "bucket-3",
-    },
-]
 
 
-def run_job(parsed_data, job_queue, job_definition):
+def run_job(destination_bucket, job_queue, job_definition):
     """
     Start to run an job to generate bucket manifest
     Args:
@@ -52,28 +32,44 @@ def run_job(parsed_data, job_queue, job_definition):
     Returns:
         bool: True if the job was submitted successfully
     """
+    parsed_data = [
+        {
+            "id": "cf56f3a1-b51e-4a4f-9e9d-b0f7eaceeff1",
+            "file_name": "HCM-WCMC-0502-C15-01A-S1-HE.8D242478-AE98-425B-A3C6-452397FA0CE2.svs",
+            "size": "3460102318",
+        },
+        {
+            "id": "03868640-990b-43d7-8d2f-bc96d9b903ae",
+            "file_name": "TCGA-YL-A8HK-01Z-00-DX1.9A095D1F-A8CA-4BE4-9B42-83BC45FE54D7.svs",
+            "size": "3328963224",
+        },
+        {
+            "id": "2ad3c5e2-5569-4915-895c-12b5a521279e",
+            "file_name": "TCGA-J4-A67L-01Z-00-DX1.4B2B89CD-B390-488F-AE3F-9E81E6D860AD.svs",
+            "size": "3876220832",
+        },
+    ]
+    submit_jobs(parsed_data, job_queue, job_definition, destination_bucket)
 
-    pass
 
-
-def submit_job(file_info, job_queue, job_definition):
+def submit_job(job_queue, job_definition, destination_bucket, file):
 
     client = boto3.client("batch", region_name=REGION)
     n_tries = 0
     while n_tries < MAX_RETRIES:
         try:
-            key = file_info["id"] + "/" + file_info["file_name"]
+            key = file["id"] + "/" + file["file_name"]
             client.submit_job(
                 jobName="object_copy",
                 jobQueue=job_queue,
                 jobDefinition=job_definition,
                 containerOverrides={
                     "environment": [
-                        {"value": file_info["id"], "name": "ID"},
-                        {"value": file_info["file_name"], "name": "FILE_NAME"},
-                        {"value": file_info["size"], "name": "SIZE"},
+                        {"value": file["id"], "name": "ID"},
+                        {"value": file["file_name"], "name": "FILE_NAME"},
+                        {"value": file["size"], "name": "SIZE"},
                         {
-                            "value": file_info["destination_bucket"],
+                            "value": destination_bucket,
                             "name": "DESTINATION_BUCKET",
                         },
                         {"value": key, "name": "KEY"},
@@ -98,7 +94,7 @@ def submit_job(file_info, job_queue, job_definition):
     return False
 
 
-def submit_jobs(file_info, job_queue, job_definition):
+def submit_jobs(file_info, job_queue, job_definition, destination_bucket):
     """
     Submit jobs to the queue
 
@@ -111,7 +107,7 @@ def submit_jobs(file_info, job_queue, job_definition):
         bool: True if the job was submitted successfully
     """
 
-    par_submit_job = partial(submit_job(file_info, job_queue, job_definition))
+    par_submit_job = partial(submit_job, job_queue, job_definition, destination_bucket)
     with Pool(NUMBER_OF_THREADS) as pool:
         pool.map(par_submit_job, file_info)
 
