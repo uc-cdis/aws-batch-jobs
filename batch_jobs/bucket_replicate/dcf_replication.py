@@ -10,6 +10,8 @@ import logging
 import boto3
 from botocore.exceptions import ClientError
 
+from settings import POSTFIX_1_EXCEPTION, POSTFIX_2_EXCEPTION
+
 logging.basicConfig(level=logging.INFO)
 # logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
@@ -112,7 +114,6 @@ def submit_jobs(file_info, job_queue, job_definition, destination_bucket):
         pool.map(par_submit_job, file_info)
 
 
-# Not using at the moment but will use later to parase a GDC manifest
 def parse_manifest_file(manifest_file):
     try:
         with open(manifest_file, mode="r", newline="", encoding="utf-8") as csv_file:
@@ -123,14 +124,59 @@ def parse_manifest_file(manifest_file):
             # Read the header
             # Iterate through each row in the CSV
             i = 0
+            list_reader = csv_reader
             for row in csv_reader:
                 fi["id"] = row["id"]
                 fi["file_name"] = row["file_name"]
                 fi["size"] = row["size"]
-                i += 1
-                if i == 4:
-                    break
+                fi["acl"] = row["acl"]
+                fi["md5"] = row["md5"]
+                fi["baseid"] = row["baseid"]
+                fi["url"] = row["url"]
+                fi["project_id"] = row["project_id"]
+                fi["destination_bucket"] = map_project_to_bucket(fi)
                 parsed_data.append(fi)
-        return parsed_data
+            return parsed_data
     except Exception as e:
         print(f"An error occurred: {str(e)}")
+
+
+def map_project_to_bucket(fi):
+    """
+    Maps a project ID to its corresponding AWS and GCS bucket prefixes.
+    """
+
+    if fi["project_id"] in PROJECT_MAP:
+        bucket = PROJECT_MAP[fi["project_id"]]["aws_bucket_prefix"]
+    else:
+        raise ValueError(
+            f"Project ID {fi['project_id']} not found in the mapping. Available projects: {list(PROJECT_MAP.keys())}"
+        )
+
+    if fi["acl"] == "['open']":
+        if "target" in bucket:
+            bucket = "gdc-target-phs000218-2-open"
+        elif bucket not in POSTFIX_1_EXCEPTION and bucket not in POSTFIX_2_EXCEPTION:
+            bucket += "-2-open"
+        elif bucket in POSTFIX_1_EXCEPTION:
+            bucket += "-open"
+        elif bucket in POSTFIX_2_EXCEPTION:
+            bucket += "-2-open"
+        else:
+            raise ValueError(
+                f"Bucket {fi['bucket']} not recognized. Expected 'open' or 'controlled'."
+            )
+    elif fi["acl"] != "['open']":
+        if "target" in bucket:
+            bucket = "target-controlled"
+        elif bucket not in POSTFIX_1_EXCEPTION and bucket not in POSTFIX_2_EXCEPTION:
+            bucket += "-controlled"
+        elif bucket in POSTFIX_1_EXCEPTION:
+            bucket += "-controlled"
+        elif bucket in POSTFIX_2_EXCEPTION:
+            bucket += "-2-controlled"
+        else:
+            raise ValueError(
+                f"Bucket {fi['bucket']} not recognized. Expected 'open' or 'controlled'."
+            )
+    return bucket
