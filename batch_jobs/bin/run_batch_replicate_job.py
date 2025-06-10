@@ -1,7 +1,7 @@
 import argparse
 import settings
 
-from batch_jobs.bucket_replicate.bucket_replicate_job import run_job
+from batch_jobs.bucket_replicate.dcf_replication import run_job
 
 
 def parse_arguments():
@@ -33,7 +33,6 @@ if __name__ == "__main__":
     args = parse_arguments()
     if args.action == "replicate-bucket":
         run_job(
-            args.source_bucket,
             args.destination_bucket,
             args.job_queue,
             args.job_definition,
