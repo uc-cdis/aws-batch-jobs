@@ -16,12 +16,15 @@ logging.basicConfig(level=logging.INFO)
 # logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 NUMBER_OF_THREADS = 16
+# TODO: I think we'll have to clean up the retry logic. There's two retries happening.
+# One in the submit_job function and another one in attempting to download the file in the object_copy_job.sh script.
+# Lets make it clear and have it as separate parameters with defaults values.
 MAX_RETRIES = 10
 
 REGION = os.environ.get("REGION", "us-east-1")
 
 
-def run_job(destination_bucket, job_queue, job_definition):
+def run_job(manifest_file, destination_bucket, job_queue, job_definition):
     """
     Start to run an job to generate bucket manifest
     Args:
@@ -34,23 +37,7 @@ def run_job(destination_bucket, job_queue, job_definition):
     Returns:
         bool: True if the job was submitted successfully
     """
-    parsed_data = [
-        {
-            "id": "cf56f3a1-b51e-4a4f-9e9d-b0f7eaceeff1",
-            "file_name": "HCM-WCMC-0502-C15-01A-S1-HE.8D242478-AE98-425B-A3C6-452397FA0CE2.svs",
-            "size": "3460102318",
-        },
-        {
-            "id": "03868640-990b-43d7-8d2f-bc96d9b903ae",
-            "file_name": "TCGA-YL-A8HK-01Z-00-DX1.9A095D1F-A8CA-4BE4-9B42-83BC45FE54D7.svs",
-            "size": "3328963224",
-        },
-        {
-            "id": "2ad3c5e2-5569-4915-895c-12b5a521279e",
-            "file_name": "TCGA-J4-A67L-01Z-00-DX1.4B2B89CD-B390-488F-AE3F-9E81E6D860AD.svs",
-            "size": "3876220832",
-        },
-    ]
+    parsed_data = parse_manifest_file(manifest_file)
     submit_jobs(parsed_data, job_queue, job_definition, destination_bucket)
 
 
@@ -61,6 +48,8 @@ def submit_job(job_queue, job_definition, destination_bucket, file):
     while n_tries < MAX_RETRIES:
         try:
             key = file["id"] + "/" + file["file_name"]
+            # TODO: I think in the POC, we just hardcoded the ACCESS_TOKEN. We should be able to pass it as an environment variable
+
             client.submit_job(
                 jobName="object_copy",
                 jobQueue=job_queue,
@@ -78,6 +67,8 @@ def submit_job(job_queue, job_definition, destination_bucket, file):
                     ]
                 },
             )
+            # TODO: We should be able to figure out whether a job copied a file successfully or not.
+            # If not, we should create a failed manfiest that we can resubmit later
             logging.info("submitting job to copy file {}".format(key))
             return True
         except ClientError as e:
