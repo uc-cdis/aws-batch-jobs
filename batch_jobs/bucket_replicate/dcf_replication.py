@@ -37,7 +37,8 @@ def run_job(manifest_file, destination_bucket, job_queue, job_definition):
     Returns:
         bool: True if the job was submitted successfully
     """
-    parsed_data = parse_manifest_file(manifest_file)
+    local_manifest = get_manifest_from_bucket(manifest_file)
+    parsed_data = parse_manifest_file(local_manifest)
     submit_jobs(parsed_data, job_queue, job_definition, destination_bucket)
 
 
@@ -171,3 +172,21 @@ def map_project_to_bucket(fi):
                 f"Bucket {fi['bucket']} not recognized. Expected 'open' or 'controlled'."
             )
     return bucket
+
+
+def get_manifest_from_bucket(s3_location):
+    """
+    Get the manifest file from the bucket
+
+    Args:
+        s3_location(str): s3 location of the manifest file
+
+    Returns:
+        str: path to the manifest file
+    """
+    s3 = boto3.client("s3", region_name=REGION)
+
+    bucket, key = s3_location.replace("s3://", "").split("/", 1)
+    local_manifest = "/tmp/{}".format(key.split("/")[-1])
+    s3.download_file(bucket, key, local_manifest)
+    return local_manifest
