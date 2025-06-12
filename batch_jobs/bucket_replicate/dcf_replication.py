@@ -10,7 +10,12 @@ import logging
 import boto3
 from botocore.exceptions import ClientError
 
-from batch_jobs.bin.settings import POSTFIX_1_EXCEPTION, POSTFIX_2_EXCEPTION
+from batch_jobs.bin.settings import (
+    POSTFIX_1_EXCEPTION,
+    POSTFIX_2_EXCEPTION,
+    PROJECT_ACL,
+    GDC_TOKEN,
+)
 
 logging.basicConfig(level=logging.INFO)
 # logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
@@ -24,7 +29,7 @@ MAX_RETRIES = 10
 REGION = os.environ.get("REGION", "us-east-1")
 
 
-def run_job(manifest_file, destination_bucket, job_queue, job_definition):
+def run_job(manifest_file, job_queue, job_definition):
     """
     Start to run an job to generate bucket manifest
     Args:
@@ -39,10 +44,10 @@ def run_job(manifest_file, destination_bucket, job_queue, job_definition):
     """
     local_manifest = get_manifest_from_bucket(manifest_file)
     parsed_data = parse_manifest_file(local_manifest)
-    submit_jobs(parsed_data, job_queue, job_definition, destination_bucket)
+    submit_jobs(parsed_data, job_queue, job_definition)
 
 
-def submit_job(job_queue, job_definition, destination_bucket, file):
+def submit_job(job_queue, job_definition, file):
 
     client = boto3.client("batch", region_name=REGION)
     n_tries = 0
@@ -61,10 +66,11 @@ def submit_job(job_queue, job_definition, destination_bucket, file):
                         {"value": file["file_name"], "name": "FILE_NAME"},
                         {"value": file["size"], "name": "SIZE"},
                         {
-                            "value": destination_bucket,
+                            "value": file["destination_bucket"],
                             "name": "DESTINATION_BUCKET",
                         },
                         {"value": key, "name": "KEY"},
+                        {"value": GDC_TOKEN, "name": "GDC_TOKEN"},
                     ]
                 },
             )
@@ -138,11 +144,11 @@ def map_project_to_bucket(fi):
     Maps a project ID to its corresponding AWS and GCS bucket prefixes.
     """
 
-    if fi["project_id"] in PROJECT_MAP:
-        bucket = PROJECT_MAP[fi["project_id"]]["aws_bucket_prefix"]
+    if fi["project_id"] in PROJECT_ACL:
+        bucket = PROJECT_ACL[fi["project_id"]]["aws_bucket_prefix"]
     else:
         raise ValueError(
-            f"Project ID {fi['project_id']} not found in the mapping. Available projects: {list(PROJECT_MAP.keys())}"
+            f"Project ID {fi['project_id']} not found in the mapping. Available projects: {list(PROJECT_ACL.keys())}"
         )
 
     if fi["acl"] == "['open']":
@@ -184,7 +190,9 @@ def get_manifest_from_bucket(s3_location):
     Returns:
         str: path to the manifest file
     """
-    s3 = boto3.client("s3", region_name=REGION)
+    s3 = boto3.client(
+        "s3",
+    )
 
     bucket, key = s3_location.replace("s3://", "").split("/", 1)
     local_manifest = "/tmp/{}".format(key.split("/")[-1])

@@ -10,14 +10,9 @@ def parse_arguments():
 
     bucket_manifest_cmd = subparsers.add_parser("replicate-bucket")
     bucket_manifest_cmd.add_argument(
-        "--source_bucket",
+        "--gdc_manifest_path",
         required=True,
-        help="source s3 bucket where data will be copied from",
-    )
-    bucket_manifest_cmd.add_argument(
-        "--destination_bucket",
-        required=True,
-        help="destination s3 bucket where data will be copied to",
+        help="s3 path to the manifest file that contains the list of files to be copied",
     )
     bucket_manifest_cmd.add_argument(
         "--job_queue", required=True, help="The name of s3 job queue"
@@ -33,7 +28,7 @@ if __name__ == "__main__":
     args = parse_arguments()
     if args.action == "replicate-bucket":
         run_job(
-            args.destination_bucket,
+            args.gdc_manifest_path,
             args.job_queue,
             args.job_definition,
         )
