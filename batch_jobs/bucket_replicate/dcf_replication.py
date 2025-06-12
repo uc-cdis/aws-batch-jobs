@@ -10,7 +10,7 @@ import logging
 import boto3
 from botocore.exceptions import ClientError
 
-from batch_jobs.bin.settings import (
+from bin.settings import (
     POSTFIX_1_EXCEPTION,
     POSTFIX_2_EXCEPTION,
     PROJECT_ACL,
