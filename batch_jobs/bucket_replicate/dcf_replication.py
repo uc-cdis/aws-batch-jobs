@@ -34,10 +34,8 @@ def run_job(manifest_file, job_queue, job_definition):
     Start to run an job to generate bucket manifest
     Args:
         file_info(dict): file info
-        destination_bucket(str): destination bucket name
         job_queue(str): job queue name
         job_definition(str): job definition name
-
 
     Returns:
         bool: True if the job was submitted successfully
