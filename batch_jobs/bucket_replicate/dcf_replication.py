@@ -197,6 +197,6 @@ def get_manifest_from_bucket(s3_location):
     try:
         s3.download_file(bucket, key, local_manifest)
     except Exception as e:
-        logging(e)
+        logging.error(f"Error occured: {e}")
         raise (e)
     return local_manifest
