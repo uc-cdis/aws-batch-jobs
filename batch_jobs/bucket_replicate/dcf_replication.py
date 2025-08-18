@@ -194,5 +194,9 @@ def get_manifest_from_bucket(s3_location):
 
     bucket, key = s3_location.replace("s3://", "").split("/", 1)
     local_manifest = "/tmp/{}".format(key.split("/")[-1])
-    s3.download_file(bucket, key, local_manifest)
+    try:
+        s3.download_file(bucket, key, local_manifest)
+    except Exception as e:
+        logging(e)
+        raise (e)
     return local_manifest
