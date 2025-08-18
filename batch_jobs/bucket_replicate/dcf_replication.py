@@ -29,7 +29,7 @@ MAX_RETRIES = 10
 REGION = os.environ.get("REGION", "us-east-1")
 
 
-def run_job(manifest_file, job_queue, job_definition):
+def run_job(manifest_file, job_queue, job_definition, destination_bucket):
     """
     Start to run an job to generate bucket manifest
     Args:
@@ -42,7 +42,7 @@ def run_job(manifest_file, job_queue, job_definition):
     """
     local_manifest = get_manifest_from_bucket(manifest_file)
     parsed_data = parse_manifest_file(local_manifest)
-    submit_jobs(parsed_data, job_queue, job_definition)
+    submit_jobs(parsed_data, job_queue, job_definition, destination_bucket)
 
 
 def submit_job(job_queue, job_definition, file):

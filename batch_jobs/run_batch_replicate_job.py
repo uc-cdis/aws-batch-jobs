@@ -19,7 +19,9 @@ def parse_arguments():
     bucket_manifest_cmd.add_argument(
         "--job_definition", required=True, help="The name of the job definition"
     )
-
+    bucket_manifest_cmd.add_argument(
+        "--destination_bucket", required=True, help="Destination Bucket Name"
+    )
     return parser.parse_args()
 
 
@@ -30,4 +32,5 @@ if __name__ == "__main__":
             args.gdc_manifest_path,
             args.job_queue,
             args.job_definition,
+            args.destination_bucket,
         )
