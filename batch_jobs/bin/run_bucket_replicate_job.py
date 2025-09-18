@@ -3,13 +3,6 @@ import settings
 
 from batch_jobs.bucket_replicate.bucket_replicate_job import run_job
 
-# TODO:
-# 1. Create a seperate run_dcf_replication_job.py file modeled after this file
-# 2. Add a command line argument to specify:
-#   --manifest_file_path: Path to the manifest file containing the list of files to copy
-#   --thread_count: Number of threads to use for copying files
-#   --retry_count: Number of retries for each file copy operation
-
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
