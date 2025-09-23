@@ -10,7 +10,7 @@ import logging
 import boto3
 from botocore.exceptions import ClientError
 
-from bin.settings import (
+from batch_jobs.bin.settings import (
     POSTFIX_1_EXCEPTION,
     POSTFIX_2_EXCEPTION,
     PROJECT_ACL,
@@ -116,12 +116,10 @@ def parse_manifest_file(manifest_file):
             # Create a DictReader object
             parsed_data = []
             csv_reader = csv.DictReader(csv_file, delimiter="\t")
-            fi = {}
             # Read the header
             # Iterate through each row in the CSV
-            i = 0
-            list_reader = csv_reader
             for row in csv_reader:
+                fi = {}
                 fi["id"] = row["id"]
                 fi["file_name"] = row["file_name"]
                 fi["size"] = row["size"]
@@ -139,9 +137,8 @@ def parse_manifest_file(manifest_file):
 
 def map_project_to_bucket(fi):
     """
-    Maps a project ID to its corresponding AWS and GCS bucket prefixes.
+    Maps a project ID to its corresponding AWS bucket prefix
     """
-
     if fi["project_id"] in PROJECT_ACL:
         bucket = PROJECT_ACL[fi["project_id"]]["aws_bucket_prefix"]
     else:

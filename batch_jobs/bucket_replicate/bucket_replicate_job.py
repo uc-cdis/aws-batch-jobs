@@ -15,8 +15,6 @@ from urllib.parse import urlparse
 import boto3
 from botocore.exceptions import ClientError
 
-from utils import utils
-
 logging.basicConfig(level=logging.INFO)
 # logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
