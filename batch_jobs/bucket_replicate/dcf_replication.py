@@ -42,18 +42,35 @@ def run_job(manifest_file, job_queue, job_definition, destination_bucket):
     """
     local_manifest = get_manifest_from_bucket(manifest_file)
     parsed_data = parse_manifest_file(local_manifest)
-    submit_jobs(parsed_data, job_queue, job_definition, destination_bucket)
+    submitted, skipped, failed = submit_jobs(
+        parsed_data, job_queue, job_definition, destination_bucket
+    )
+
+    logging.info(f"Job submission summary:")
+    logging.info(f"Submitted: {submitted} jobs")
+    logging.info(f"Skipped: {skipped} files (already exist)")
+    logging.info(f"Failed: {failed} submissions")
 
 
 def submit_job(job_queue, job_definition, file):
+    key = file["id"] + "/" + file["file_name"]
+
+    # Pre-check if file already exists
+    exists, message = check_file_exists(
+        file["destination_bucket"],
+        key,
+        int(file["size"]),
+        file["md5"],
+    )
+
+    if exists:
+        logging.info(f"Skipping {key}: {message}")
+        return "SKIPPED"
 
     client = boto3.client("batch", region_name=REGION)
     n_tries = 0
     while n_tries < MAX_RETRIES:
         try:
-            key = file["id"] + "/" + file["file_name"]
-            # TODO: I think in the POC, we just hardcoded the ACCESS_TOKEN. We should be able to pass it as an environment variable
-
             client.submit_job(
                 jobName="object_copy",
                 jobQueue=job_queue,
@@ -72,10 +89,8 @@ def submit_job(job_queue, job_definition, file):
                     ]
                 },
             )
-            # TODO: We should be able to figure out whether a job copied a file successfully or not.
-            # If not, we should create a failed manfiest that we can resubmit later
             logging.info("submitting job to copy file {}".format(key))
-            return True
+            return "SUBMITTED"
         except ClientError as e:
             if e.response["Error"]["Code"] == "AccessDeniedException":
                 logging.error(
@@ -89,7 +104,7 @@ def submit_job(job_queue, job_definition, file):
                 logging.info("TooManyRequestsException. Sleep and retry...")
 
         time.sleep(2**n_tries)
-    return False
+    return "FAILED"
 
 
 def submit_jobs(file_info, job_queue, job_definition, destination_bucket):
@@ -106,8 +121,23 @@ def submit_jobs(file_info, job_queue, job_definition, destination_bucket):
     """
 
     par_submit_job = partial(submit_job, job_queue, job_definition, destination_bucket)
+
+    submitted_count = 0
+    skipped_count = 0
+    failed_count = 0
+
     with Pool(NUMBER_OF_THREADS) as pool:
-        pool.map(par_submit_job, file_info)
+        results = pool.map(par_submit_job, file_info)
+
+    for result in results:
+        if result == "SUBMITTED":
+            submitted_count += 1
+        elif result == "SKIPPED":
+            skipped_count += 1
+        elif result == "FAILED":
+            failed_count += 1
+
+    return submitted_count, skipped_count, failed_count
 
 
 def parse_manifest_file(manifest_file):
@@ -197,3 +227,39 @@ def get_manifest_from_bucket(s3_location):
         logging.error(f"Error occured: {e}")
         raise (e)
     return local_manifest
+
+
+def check_file_exists(destination_bucket, key, expected_size, expected_md5=None):
+    """
+    Check if file already exists in S3 with correct size and MD5
+    """
+    s3 = boto3.client("s3")
+
+    try:
+        response = s3.head_object(Bucket=destination_bucket, Key=key)
+        existing_size = response["ContentLength"]
+        existing_etag = response["ETag"].strip('"')
+
+        if existing_size == expected_size:
+            if expected_md5 and expected_md5 != "None":
+                # For single-part uploads, ETag is the MD5
+                if existing_etag == expected_md5:
+                    return True, "File exists with matching size and MD5"
+                else:
+                    return (
+                        False,
+                        f"File exists but MD5 mismatch: {existing_etag} vs {expected_md5}",
+                    )
+            else:
+                return True, "File exists with matching size (MD5 not verified)"
+        else:
+            return (
+                False,
+                f"File exists but size mismatch: {existing_size} vs {expected_size}",
+            )
+
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "404":
+            return False, "File does not exist"
+        else:
+            return False, f"Error checking file: {e}"
