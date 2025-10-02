@@ -21,15 +21,19 @@ logging.basicConfig(level=logging.INFO)
 # logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 NUMBER_OF_THREADS = 16
-# TODO: I think we'll have to clean up the retry logic. There's two retries happening.
-# One in the submit_job function and another one in attempting to download the file in the object_copy_job.sh script.
-# Lets make it clear and have it as separate parameters with defaults values.
 MAX_RETRIES = 10
 
 REGION = os.environ.get("REGION", "us-east-1")
 
 
-def run_job(manifest_file, job_queue, job_definition, destination_bucket):
+def run_job(
+    manifest_file,
+    job_queue,
+    job_definition,
+    destination_bucket,
+    thread_count=NUMBER_OF_THREADS,
+    max_retries=MAX_RETRIES,
+):
     """
     Start to run an job to generate bucket manifest
     Args:
@@ -40,6 +44,12 @@ def run_job(manifest_file, job_queue, job_definition, destination_bucket):
     Returns:
         bool: True if the job was submitted successfully
     """
+    global NUMBER_OF_THREADS
+    global MAX_RETRIES
+
+    NUMBER_OF_THREADS = thread_count
+    MAX_RETRIES = max_retries
+
     local_manifest = get_manifest_from_bucket(manifest_file)
     parsed_data = parse_manifest_file(local_manifest)
     submitted, skipped, failed = submit_jobs(
@@ -72,7 +82,7 @@ def submit_job(job_queue, job_definition, file):
     while n_tries < MAX_RETRIES:
         try:
             client.submit_job(
-                jobName="object_copy",
+                jobName="gdc_copy",
                 jobQueue=job_queue,
                 jobDefinition=job_definition,
                 containerOverrides={

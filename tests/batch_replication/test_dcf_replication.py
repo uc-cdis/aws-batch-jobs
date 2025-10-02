@@ -2,7 +2,7 @@ import pytest
 import os
 import csv
 from unittest.mock import patch
-from batch_jobs.bucket_replicate.dcf_replication import (
+from batch_jobs.dcf_replicate.dcf_replication import (
     parse_manifest_file,
     map_project_to_bucket,
 )
