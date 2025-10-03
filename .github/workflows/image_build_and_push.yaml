@@ -50,7 +50,7 @@ jobs:
     name: gdc_copy
     uses: uc-cdis/.github/.github/workflows/image_build_push.yaml@master
     with:
-      DOCKERFILE_LOCATION: "./batch_jobs/bucket_replicate/gdc_copy.Dockerfile"
+      DOCKERFILE_LOCATION: "./batch_jobs/dcf_replication/gdc_copy.Dockerfile"
       OVERRIDE_REPO_NAME: "gdc_copy"
       USE_QUAY_ONLY: true
       BUILD_PLATFORMS: "linux/amd64"
