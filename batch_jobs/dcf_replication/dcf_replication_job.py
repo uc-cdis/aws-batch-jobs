@@ -232,7 +232,9 @@ def get_manifest_from_bucket(s3_location):
     bucket, key = s3_location.replace("s3://", "").split("/", 1)
     local_manifest = "/tmp/{}".format(key.split("/")[-1])
     try:
+        logging.info(f"Attempting to download manifest {key} from s3 bucket {bucket} ")
         s3.download_file(bucket, key, local_manifest)
+        logging.info("Retrieved manifest from s3")
     except Exception as e:
         logging.error(f"Error occured: {e}")
         raise (e)
