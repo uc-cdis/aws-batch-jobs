@@ -4,6 +4,9 @@ COPY . /dcf_replication
 
 WORKDIR /dcf_replication
 
+RUN pip3 install awscli
+RUN pip install -r requirements.txt
+
 USER root
 
 RUN curl -fsSL https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.deb \
