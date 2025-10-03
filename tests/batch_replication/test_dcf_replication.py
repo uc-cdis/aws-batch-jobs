@@ -2,7 +2,7 @@ import pytest
 import os
 import csv
 from unittest.mock import patch
-from batch_jobs.dcf_replicate.dcf_replication import (
+from batch_jobs.dcf_replication.dcf_replication_job import (
     parse_manifest_file,
     map_project_to_bucket,
 )
@@ -22,13 +22,13 @@ def test_parse_manifest_file_success():
     Test successful parsing of manifest file using test_settings.
     """
     with patch(
-        "batch_jobs.bucket_replicate.dcf_replication.PROJECT_ACL",
+        "batch_jobs.dcf_replication.dcf_replication_job.PROJECT_ACL",
         test_settings.PROJECT_ACL,
     ), patch(
-        "batch_jobs.bucket_replicate.dcf_replication.POSTFIX_1_EXCEPTION",
+        "batch_jobs.dcf_replication.dcf_replication_job.POSTFIX_1_EXCEPTION",
         test_settings.POSTFIX_1_EXCEPTION,
     ), patch(
-        "batch_jobs.bucket_replicate.dcf_replication.POSTFIX_2_EXCEPTION",
+        "batch_jobs.dcf_replication.dcf_replication_job.POSTFIX_2_EXCEPTION",
         test_settings.POSTFIX_2_EXCEPTION,
     ):
 
@@ -62,13 +62,13 @@ def test_map_project_to_bucket():
     """
 
     with patch(
-        "batch_jobs.bucket_replicate.dcf_replication.PROJECT_ACL",
+        "batch_jobs.dcf_replication.dcf_replication_job.PROJECT_ACL",
         test_settings.PROJECT_ACL,
     ), patch(
-        "batch_jobs.bucket_replicate.dcf_replication.POSTFIX_1_EXCEPTION",
+        "batch_jobs.dcf_replication.dcf_replication_job.POSTFIX_1_EXCEPTION",
         test_settings.POSTFIX_1_EXCEPTION,
     ), patch(
-        "batch_jobs.bucket_replicate.dcf_replication.POSTFIX_2_EXCEPTION",
+        "batch_jobs.dcf_replication.dcf_replication_job.POSTFIX_2_EXCEPTION",
         test_settings.POSTFIX_2_EXCEPTION,
     ):
 
@@ -107,13 +107,13 @@ def test_map_project_to_bucket_invalid_project():
     test_fi = {"project_id": "INVALID_PROJECT"}
 
     with patch(
-        "batch_jobs.bucket_replicate.dcf_replication.PROJECT_ACL",
+        "batch_jobs.dcf_replication.dcf_replication_job.PROJECT_ACL",
         test_settings.PROJECT_ACL,
     ), patch(
-        "batch_jobs.bucket_replicate.dcf_replication.POSTFIX_1_EXCEPTION",
+        "batch_jobs.dcf_replication.dcf_replication_job.POSTFIX_1_EXCEPTION",
         test_settings.POSTFIX_1_EXCEPTION,
     ), patch(
-        "batch_jobs.bucket_replicate.dcf_replication.POSTFIX_2_EXCEPTION",
+        "batch_jobs.dcf_replication.dcf_replication_job.POSTFIX_2_EXCEPTION",
         test_settings.POSTFIX_2_EXCEPTION,
     ):
 
@@ -126,13 +126,13 @@ def test_parse_manifest_file_fields():
     Test that parsed data contains correct field values using test_settings.
     """
     with patch(
-        "batch_jobs.bucket_replicate.dcf_replication.PROJECT_ACL",
+        "batch_jobs.dcf_replication.dcf_replication_job.PROJECT_ACL",
         test_settings.PROJECT_ACL,
     ), patch(
-        "batch_jobs.bucket_replicate.dcf_replication.POSTFIX_1_EXCEPTION",
+        "batch_jobs.dcf_replication.dcf_replication_job.POSTFIX_1_EXCEPTION",
         test_settings.POSTFIX_1_EXCEPTION,
     ), patch(
-        "batch_jobs.bucket_replicate.dcf_replication.POSTFIX_2_EXCEPTION",
+        "batch_jobs.dcf_replication.dcf_replication_job.POSTFIX_2_EXCEPTION",
         test_settings.POSTFIX_2_EXCEPTION,
     ):
 

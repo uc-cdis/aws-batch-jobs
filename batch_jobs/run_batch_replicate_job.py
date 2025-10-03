@@ -1,6 +1,6 @@
 import argparse
 
-from batch_jobs.dcf_replicate.dcf_replication import run_job
+from batch_jobs.dcf_replication.dcf_replication_job import run_job
 
 
 def parse_arguments():
