@@ -9,7 +9,7 @@ from batch_jobs.dcf_replication.dcf_replication_job import (
 
 
 # Import the test settings
-import test_settings
+import tests.batch_replication.test_settings as test_settings
 
 # Get path to test_manifest
 TEST_MANIFEST_PATH = os.path.join(

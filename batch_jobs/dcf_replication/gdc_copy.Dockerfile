@@ -1,8 +1,8 @@
 FROM quay.io/cdis/awshelper:master
 
-COPY . /bucket-replicate
+COPY . /dcf_replication
 
-WORKDIR /bucket-replicate
+WORKDIR /dcf_replication
 
 USER root
 
