@@ -14,4 +14,4 @@ RUN curl -fsSL https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/moun
 RUN mkdir -p mnt
 
 ENTRYPOINT ["/bin/bash"]
-CMD ["./batch_jobs/dcf_replicate/gdc_copy_job.sh"]
+CMD [ "./batch_jobs/dcf_replicate/gdc_copy_job.sh" ]
