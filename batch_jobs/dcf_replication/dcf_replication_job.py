@@ -47,8 +47,8 @@ def run_job(
     global NUMBER_OF_THREADS
     global MAX_RETRIES
 
-    NUMBER_OF_THREADS = thread_count
-    MAX_RETRIES = max_retries
+    NUMBER_OF_THREADS = int(thread_count)
+    MAX_RETRIES = int(max_retries)
 
     local_manifest = get_manifest_from_bucket(manifest_file)
     parsed_data = parse_manifest_file(local_manifest)
@@ -64,9 +64,21 @@ def run_job(
 
 def submit_job(job_queue, job_definition, file):
     key = file["id"] + "/" + file["file_name"]
+    session = boto3.Session(profile_name="default")
+    s3 = session.client("s3")
+
+    # Pre-check if bucket exists
+    if not check_bucket_exists(s3, file["destination_bucket"]):
+        logging.error(
+            "Destination bucket does not exist in s3: {}".format(
+                file["destination_bucket"]
+            )
+        )
+        return "SKIPPED"
 
     # Pre-check if file already exists
     exists, message = check_file_exists(
+        s3,
         file["destination_bucket"],
         key,
         int(file["size"]),
@@ -130,7 +142,7 @@ def submit_jobs(file_info, job_queue, job_definition, destination_bucket):
         bool: True if the job was submitted successfully
     """
 
-    par_submit_job = partial(submit_job, job_queue, job_definition, destination_bucket)
+    par_submit_job = partial(submit_job, job_queue, job_definition)
 
     submitted_count = 0
     skipped_count = 0
@@ -172,7 +184,7 @@ def parse_manifest_file(manifest_file):
                 parsed_data.append(fi)
             return parsed_data
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        logging.error(f"An error occurred: {str(e)}")
 
 
 def map_project_to_bucket(fi):
@@ -225,9 +237,8 @@ def get_manifest_from_bucket(s3_location):
     Returns:
         str: path to the manifest file
     """
-    s3 = boto3.client(
-        "s3",
-    )
+    session = boto3.Session(profile_name="default")
+    s3 = session.client("s3")
 
     bucket, key = s3_location.replace("s3://", "").split("/", 1)
     local_manifest = "/tmp/{}".format(key.split("/")[-1])
@@ -241,11 +252,10 @@ def get_manifest_from_bucket(s3_location):
     return local_manifest
 
 
-def check_file_exists(destination_bucket, key, expected_size, expected_md5=None):
+def check_file_exists(s3, destination_bucket, key, expected_size, expected_md5=None):
     """
     Check if file already exists in S3 with correct size and MD5
     """
-    s3 = boto3.client("s3")
 
     try:
         response = s3.head_object(Bucket=destination_bucket, Key=key)
@@ -275,3 +285,22 @@ def check_file_exists(destination_bucket, key, expected_size, expected_md5=None)
             return False, "File does not exist"
         else:
             return False, f"Error checking file: {e}"
+
+
+def check_bucket_exists(s3, bucket_name):
+    """
+    Check to see if destination bucket exists
+    """
+    try:
+        # Use the s3 client that was passed to the function
+        s3.head_bucket(Bucket=bucket_name)
+        return True
+    except ClientError as e:
+        error_code = e.response["Error"]["Code"]
+        if error_code == "404":
+            logging.info(f"Bucket {bucket_name} does not exist")
+        elif error_code == "403":
+            logging.error(f"Access denied to bucket {bucket_name}")
+        else:
+            logging.error(f"Error checking bucket {bucket_name}: {e}")
+        return False
