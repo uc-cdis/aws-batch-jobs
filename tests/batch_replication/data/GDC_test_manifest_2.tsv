@@ -1,0 +1,5 @@
+id	file_name	md5	size	state	project_id	baseid	version	release	acl	type	deletereason	url
+07de33ac-7a49-4008-b035-707129c02a1d	07de33ac-7a49-4008-b035-707129c02a1d	53ac6ffda159e554622b0653a456ff9f	131	released	ALICE	07de33ac-7a49-4008-b035-707129c02a1d	1	2	[u'open']	active		s3://test-gdc-bucket/07de33ac-7a49-4008-b035-707129c02a1d
+d85d67aa-7273-403f-be77-9ef8ae998e4a	d85d67aa-7273-403f-be77-9ef8ae998e4a	0b1c5ce51087de69d08be74839d3714f	29	released	ALICE	d85d67aa-7273-403f-be77-9ef8ae998e4a	1	2	['open']	active		s3://test-gdc-bucket/d85d67aa-7273-403f-be77-9ef8ae998e4a
+9c53ffd6-ec96-4fa0-9f81-1ed6fa376380	9c53ffd6-ec96-4fa0-9f81-1ed6fa376380	51ac986913cfd957c60372362d8490c9	42	released	ALICE	9c53ffd6-ec96-4fa0-9f81-1ed6fa376380	1	2	['phs000178']	active		s3://test-gdc-bucket/9c53ffd6-ec96-4fa0-9f81-1ed6fa376380
+4cb739ba-edc9-47a3-a395-154d039d5545	4cb739ba-edc9-47a3-a395-154d039d5545	3828ec2ac83976ff8b8e412d80489e99	166	released	BOB	4cb739ba-edc9-47a3-a395-154d039d5545	1	2	['phs000178', 'phs000218']	active		s3://test-gdc-bucket/4cb739ba-edc9-47a3-a395-154d039d5545

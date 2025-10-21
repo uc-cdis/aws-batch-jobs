@@ -22,7 +22,7 @@ DATA_ENDPT = "https://api.gdc.cancer.gov/data/"
 
 IGNORED_FILES = "/dcf-dataservice/ignored_files_manifest.csv"
 
-# By default the postfix for open buckets are -2 and no numerical postfix for controlled
+# By default the postfix for open buckets are -2 (dcfopen) and no numerical postfix for controlled (dcfprod)
 # list of buckets that have -open and -controlled postfix
 POSTFIX_1_EXCEPTION = ["test-gdc-xyz-phs000111"]
 # list of buckets that have both -2-open and -2-controlled postfix

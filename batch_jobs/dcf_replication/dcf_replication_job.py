@@ -6,6 +6,8 @@ from functools import partial
 from multiprocessing.pool import Pool
 import time
 import logging
+import io
+import datetime
 
 import boto3
 from botocore.exceptions import ClientError
@@ -30,7 +32,7 @@ def run_job(
     manifest_file,
     job_queue,
     job_definition,
-    destination_bucket,
+    output_manifest_destination_bucket,
     thread_count=NUMBER_OF_THREADS,
     max_retries=MAX_RETRIES,
 ):
@@ -53,7 +55,7 @@ def run_job(
     local_manifest = get_manifest_from_bucket(manifest_file)
     parsed_data = parse_manifest_file(local_manifest)
     submitted, skipped, failed = submit_jobs(
-        parsed_data, job_queue, job_definition, destination_bucket
+        parsed_data, job_queue, job_definition, output_manifest_destination_bucket
     )
 
     logging.info(f"Job submission summary:")
@@ -129,7 +131,9 @@ def submit_job(job_queue, job_definition, file):
     return "FAILED"
 
 
-def submit_jobs(file_info, job_queue, job_definition, destination_bucket):
+def submit_jobs(
+    file_info, job_queue, job_definition, output_manifest_destination_bucket
+):
     """
     Submit jobs to the queue
 
@@ -147,6 +151,7 @@ def submit_jobs(file_info, job_queue, job_definition, destination_bucket):
     submitted_count = 0
     skipped_count = 0
     failed_count = 0
+    output_manifest = []
 
     with Pool(NUMBER_OF_THREADS) as pool:
         results = pool.map(par_submit_job, file_info)
@@ -158,6 +163,13 @@ def submit_jobs(file_info, job_queue, job_definition, destination_bucket):
             skipped_count += 1
         elif result == "FAILED":
             failed_count += 1
+
+        if result == "SUBMITTED" or result == "SKIPPED":
+            output_manifest.append(convert_file_info_to_output_manifest(file_info))
+
+    write_output_manifest_to_s3_file(
+        output_manifest, output_manifest_destination_bucket
+    )
 
     return submitted_count, skipped_count, failed_count
 
@@ -198,7 +210,7 @@ def map_project_to_bucket(fi):
             f"Project ID {fi['project_id']} not found in the mapping. Available projects: {list(PROJECT_ACL.keys())}"
         )
 
-    if fi["acl"] == "['open']":
+    if fi["acl"] == "['open']" or fi["acl"] == "[u'open']":
         if "target" in bucket:
             bucket = "gdc-target-phs000218-2-open"
         elif bucket not in POSTFIX_1_EXCEPTION and bucket not in POSTFIX_2_EXCEPTION:
@@ -304,3 +316,83 @@ def check_bucket_exists(s3, bucket_name):
         else:
             logging.error(f"Error checking bucket {bucket_name}: {e}")
         return False
+
+
+def convert_file_info_to_output_manifest(file_info):
+    """
+    Convert file_info to output manifest row for indexing
+    Columns: ['guid','md5','size','authz','acl','file_name','urls']
+    """
+    acls = []
+    authz = []
+    # Process acl and set authz value
+    if file_info.get("acl") in {"[u'open']", "['open']"}:
+        acls = ["*"]
+        authz = ["/open"]
+    else:
+        acls = [
+            acl.strip().replace("u'", "").replace("'", "")
+            for acl in file_info.get("acl", "").strip()[1:-1].split(",")
+        ]
+        for acl in acls:
+            if not acl.startswith("phs"):
+                raise Exception(
+                    'Only "open" and "phs[...]" ACLs are allowed. Got ACL "{}"'.format(
+                        acl
+                    )
+                )
+        authz = ["/programs/{}".format(acl) for acl in acls]
+
+    # Determine final urls
+    object_key = "{}/{}".format(file_info.get("id"), file_info.get("file_name"))
+    upload_url = "s3://{}/{}".format(file_info["destination_bucket"], object_key)
+    urls = [
+        "https://api.gdc.cancer.gov/data/{}".format(file_info.get("id", "")),
+        upload_url,
+    ]
+
+    return [
+        file_info.get("id"),
+        file_info.get("md5"),
+        file_info.get("size"),
+        acls,
+        authz,
+        file_info.get("file_name"),
+        urls,
+    ]
+
+
+def write_output_manifest_to_s3_file(data, bucket_name):
+    """
+    Write output manifest data to tsv file to s3 location
+    """
+    try:
+        time_str = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+        key = f"dcf_aws_batch_output_manifest_{time_str}.tsv"
+        session = boto3.Session(profile_name="default")
+        s3 = session.client("s3")
+        # Use the s3 client that was passed to the function
+        if check_bucket_exists(s3, bucket_name):
+            # Create an in-memory text buffer
+            csv_buffer = io.StringIO()
+
+            writer = csv.DictWriter(
+                csv_buffer,
+                fieldnames=["guid", "md5", "size", "authz", "acl", "file_name", "urls"],
+                delimiter="\t",
+            )
+            writer.writeheader()
+            writer.writerows(data)
+
+            s3.put_object(
+                Bucket=bucket_name,
+                Key=key,
+                Body=csv_buffer.getvalue(),
+                ContentType="text/csv",
+            )
+            logging.info(
+                f"Output Manifest File '{key}' successfully uploaded to S3 bucket '{bucket_name}'."
+            )
+    except ClientError as e:
+        logging.error(f"Error writing output manifest to {bucket_name}: {e}")
+        raise (e)
