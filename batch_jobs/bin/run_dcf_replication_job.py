@@ -32,7 +32,11 @@ def parse_arguments():
     dcf_replication_cmd.add_argument(
         "--job_definition", required=True, help="The name of the job definition"
     )
-
+    dcf_replication_cmd.add_argument(
+        "--output_manifest_destination_bucket",
+        required=True,
+        help="The name of the bucket for output manifest",
+    )
     return parser.parse_args()
 
 
@@ -43,6 +47,7 @@ if __name__ == "__main__":
             args.manifest_path,
             args.job_queue,
             args.job_definition,
+            args.output_manifest_destination_bucket,
             args.thread_count,
             args.max_retries,
         )
