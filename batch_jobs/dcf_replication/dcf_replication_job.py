@@ -32,7 +32,7 @@ def run_job(
     manifest_file,
     job_queue,
     job_definition,
-    output_manifest_destination_bucket,
+    output_manifest_bucket,
     thread_count=NUMBER_OF_THREADS,
     max_retries=MAX_RETRIES,
 ):
@@ -55,7 +55,7 @@ def run_job(
     local_manifest = get_manifest_from_bucket(manifest_file)
     parsed_data = parse_manifest_file(local_manifest)
     submitted, skipped, failed = submit_jobs(
-        parsed_data, job_queue, job_definition, output_manifest_destination_bucket
+        parsed_data, job_queue, job_definition, output_manifest_bucket
     )
 
     logging.info(f"Job submission summary:")
@@ -131,9 +131,7 @@ def submit_job(job_queue, job_definition, file):
     return "FAILED"
 
 
-def submit_jobs(
-    file_info, job_queue, job_definition, output_manifest_destination_bucket
-):
+def submit_jobs(file_info, job_queue, job_definition, output_manifest_bucket):
     """
     Submit jobs to the queue
 
@@ -167,9 +165,7 @@ def submit_jobs(
         if result == "SUBMITTED" or result == "SKIPPED":
             output_manifest.append(convert_file_info_to_output_manifest(file_info))
 
-    write_output_manifest_to_s3_file(
-        output_manifest, output_manifest_destination_bucket
-    )
+    write_output_manifest_to_s3_file(output_manifest, output_manifest_bucket)
 
     return submitted_count, skipped_count, failed_count
 
