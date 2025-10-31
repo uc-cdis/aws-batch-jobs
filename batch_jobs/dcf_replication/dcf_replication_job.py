@@ -87,7 +87,7 @@ def submit_job(job_queue, job_definition, file):
         int(file["size"]),
         file["md5"],
     )
-
+    print(key, message)
     if exists:
         logging.info(f"Skipping {key}: {message}")
         file[JOB_STATUS_KEY] = "SKIPPED"
@@ -350,15 +350,15 @@ def convert_file_info_to_output_manifest(file_info):
         upload_url,
     ]
 
-    return [
-        file_info.get("id"),
-        file_info.get("md5"),
-        file_info.get("size"),
-        acls,
-        authz,
-        file_info.get("file_name"),
-        urls,
-    ]
+    return {
+        "guid": file_info.get("id"),
+        "md5": file_info.get("md5"),
+        "size": file_info.get("size"),
+        "authz": authz,
+        "acl": acls,
+        "file_name": file_info.get("file_name"),
+        "urls": urls,
+    }
 
 
 def write_output_manifest_to_s3_file(data, bucket_name):

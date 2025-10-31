@@ -224,53 +224,51 @@ def test_convert_file_info_to_output_manifest():
             result = convert_file_info_to_output_manifest(fi)
             results.append(result)
         # compare with actual result
-        assert results == [
-            [
-                "07de33ac-7a49-4008-b035-707129c02a1d",
-                "53ac6ffda159e554622b0653a456ff9f",
-                "131",
-                ["*"],
-                ["/open"],
-                "07de33ac-7a49-4008-b035-707129c02a1d",
-                [
-                    "https://api.gdc.cancer.gov/data/07de33ac-7a49-4008-b035-707129c02a1d",
-                    "s3://test-gdc-xyz-phs000111-open/07de33ac-7a49-4008-b035-707129c02a1d/07de33ac-7a49-4008-b035-707129c02a1d",
-                ],
+        assert results[0] == {
+            "guid": "07de33ac-7a49-4008-b035-707129c02a1d",
+            "md5": "53ac6ffda159e554622b0653a456ff9f",
+            "size": "131",
+            "authz": ["/open"],
+            "acl": ["*"],
+            "file_name": "07de33ac-7a49-4008-b035-707129c02a1d",
+            "urls": [
+                "https://api.gdc.cancer.gov/data/07de33ac-7a49-4008-b035-707129c02a1d",
+                "s3://test-gdc-xyz-phs000111-open/07de33ac-7a49-4008-b035-707129c02a1d/07de33ac-7a49-4008-b035-707129c02a1d",
             ],
-            [
-                "d85d67aa-7273-403f-be77-9ef8ae998e4a",
-                "0b1c5ce51087de69d08be74839d3714f",
-                "29",
-                ["*"],
-                ["/open"],
-                "d85d67aa-7273-403f-be77-9ef8ae998e4a",
-                [
-                    "https://api.gdc.cancer.gov/data/d85d67aa-7273-403f-be77-9ef8ae998e4a",
-                    "s3://test-gdc-xyz-phs000111-open/d85d67aa-7273-403f-be77-9ef8ae998e4a/d85d67aa-7273-403f-be77-9ef8ae998e4a",
-                ],
+        }
+        assert results[1] == {
+            "guid": "d85d67aa-7273-403f-be77-9ef8ae998e4a",
+            "md5": "0b1c5ce51087de69d08be74839d3714f",
+            "size": "29",
+            "authz": ["/open"],
+            "acl": ["*"],
+            "file_name": "d85d67aa-7273-403f-be77-9ef8ae998e4a",
+            "urls": [
+                "https://api.gdc.cancer.gov/data/d85d67aa-7273-403f-be77-9ef8ae998e4a",
+                "s3://test-gdc-xyz-phs000111-open/d85d67aa-7273-403f-be77-9ef8ae998e4a/d85d67aa-7273-403f-be77-9ef8ae998e4a",
             ],
-            [
-                "9c53ffd6-ec96-4fa0-9f81-1ed6fa376380",
-                "51ac986913cfd957c60372362d8490c9",
-                "42",
-                ["phs000178"],
-                ["/programs/phs000178"],
-                "9c53ffd6-ec96-4fa0-9f81-1ed6fa376380",
-                [
-                    "https://api.gdc.cancer.gov/data/9c53ffd6-ec96-4fa0-9f81-1ed6fa376380",
-                    "s3://test-gdc-xyz-phs000111-controlled/9c53ffd6-ec96-4fa0-9f81-1ed6fa376380/9c53ffd6-ec96-4fa0-9f81-1ed6fa376380",
-                ],
+        }
+        assert results[2] == {
+            "guid": "9c53ffd6-ec96-4fa0-9f81-1ed6fa376380",
+            "md5": "51ac986913cfd957c60372362d8490c9",
+            "size": "42",
+            "authz": ["/programs/phs000178"],
+            "acl": ["phs000178"],
+            "file_name": "9c53ffd6-ec96-4fa0-9f81-1ed6fa376380",
+            "urls": [
+                "https://api.gdc.cancer.gov/data/9c53ffd6-ec96-4fa0-9f81-1ed6fa376380",
+                "s3://test-gdc-xyz-phs000111-controlled/9c53ffd6-ec96-4fa0-9f81-1ed6fa376380/9c53ffd6-ec96-4fa0-9f81-1ed6fa376380",
             ],
-            [
-                "4cb739ba-edc9-47a3-a395-154d039d5545",
-                "3828ec2ac83976ff8b8e412d80489e99",
-                "166",
-                ["phs000178", "phs000218"],
-                ["/programs/phs000178", "/programs/phs000218"],
-                "4cb739ba-edc9-47a3-a395-154d039d5545",
-                [
-                    "https://api.gdc.cancer.gov/data/4cb739ba-edc9-47a3-a395-154d039d5545",
-                    "s3://test-gdc-abc-phs000222-2-controlled/4cb739ba-edc9-47a3-a395-154d039d5545/4cb739ba-edc9-47a3-a395-154d039d5545",
-                ],
+        }
+        assert results[3] == {
+            "guid": "4cb739ba-edc9-47a3-a395-154d039d5545",
+            "md5": "3828ec2ac83976ff8b8e412d80489e99",
+            "size": "166",
+            "authz": ["/programs/phs000178", "/programs/phs000218"],
+            "acl": ["phs000178", "phs000218"],
+            "file_name": "4cb739ba-edc9-47a3-a395-154d039d5545",
+            "urls": [
+                "https://api.gdc.cancer.gov/data/4cb739ba-edc9-47a3-a395-154d039d5545",
+                "s3://test-gdc-abc-phs000222-2-controlled/4cb739ba-edc9-47a3-a395-154d039d5545/4cb739ba-edc9-47a3-a395-154d039d5545",
             ],
-        ]
+        }
