@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO)
 
 NUMBER_OF_THREADS = 16
 MAX_RETRIES = 10
-
+JOB_STATUS_KEY = "job_status"
 REGION = os.environ.get("REGION", "us-east-1")
 
 
@@ -76,7 +76,8 @@ def submit_job(job_queue, job_definition, file):
                 file["destination_bucket"]
             )
         )
-        return "SKIPPED"
+        file[JOB_STATUS_KEY] = "SKIPPED"
+        return file
 
     # Pre-check if file already exists
     exists, message = check_file_exists(
@@ -89,7 +90,8 @@ def submit_job(job_queue, job_definition, file):
 
     if exists:
         logging.info(f"Skipping {key}: {message}")
-        return "SKIPPED"
+        file[JOB_STATUS_KEY] = "SKIPPED"
+        return file
 
     client = boto3.client("batch", region_name=REGION)
     n_tries = 0
@@ -114,7 +116,8 @@ def submit_job(job_queue, job_definition, file):
                 },
             )
             logging.info("submitting job to copy file {}".format(key))
-            return "SUBMITTED"
+            file[JOB_STATUS_KEY] = "SUBMITTED"
+            return file
         except ClientError as e:
             if e.response["Error"]["Code"] == "AccessDeniedException":
                 logging.error(
@@ -128,7 +131,8 @@ def submit_job(job_queue, job_definition, file):
                 logging.info("TooManyRequestsException. Sleep and retry...")
 
         time.sleep(2**n_tries)
-    return "FAILED"
+    file[JOB_STATUS_KEY] = "FAILED"
+    return file
 
 
 def submit_jobs(file_info, job_queue, job_definition, output_manifest_bucket):
@@ -155,15 +159,14 @@ def submit_jobs(file_info, job_queue, job_definition, output_manifest_bucket):
         results = pool.map(par_submit_job, file_info)
 
     for result in results:
-        if result == "SUBMITTED":
+        if result[JOB_STATUS_KEY] == "SUBMITTED":
             submitted_count += 1
-        elif result == "SKIPPED":
+            output_manifest.append(convert_file_info_to_output_manifest(result))
+        elif result[JOB_STATUS_KEY] == "SKIPPED":
             skipped_count += 1
-        elif result == "FAILED":
+            output_manifest.append(convert_file_info_to_output_manifest(result))
+        elif result[JOB_STATUS_KEY] == "FAILED":
             failed_count += 1
-
-        if result == "SUBMITTED" or result == "SKIPPED":
-            output_manifest.append(convert_file_info_to_output_manifest(file_info))
 
     write_output_manifest_to_s3_file(output_manifest, output_manifest_bucket)
 
