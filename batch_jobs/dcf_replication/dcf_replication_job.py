@@ -87,7 +87,8 @@ def submit_job(job_queue, job_definition, file):
         int(file["size"]),
         file["md5"],
     )
-    print(key, message)
+    print(f"file_key is {key}, result is {message}")
+
     if exists:
         logging.info(f"Skipping {key}: {message}")
         file[JOB_STATUS_KEY] = "SKIPPED"
