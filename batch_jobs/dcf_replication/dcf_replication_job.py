@@ -272,31 +272,20 @@ def check_file_exists(s3, destination_bucket, key, expected_size, expected_md5=N
     try:
         response = s3.head_object(Bucket=destination_bucket, Key=key)
         existing_size = response["ContentLength"]
-        existing_etag = response["ETag"].strip('"')
 
         if existing_size == expected_size:
-            if expected_md5 and expected_md5 != "None":
-                # For single-part uploads, ETag is the MD5
-                if existing_etag == expected_md5:
-                    return True, "File exists with matching size and MD5"
-                else:
-                    return (
-                        False,
-                        f"File exists but MD5 mismatch: {existing_etag} vs {expected_md5}",
-                    )
-            else:
-                return True, "File exists with matching size (MD5 not verified)"
+            return True, f"File {key} exists with matching size"
         else:
             return (
                 False,
-                f"File exists but size mismatch: {existing_size} vs {expected_size}",
+                f"File {key} exists but size mismatch: {existing_size} vs {expected_size}",
             )
 
     except ClientError as e:
         if e.response["Error"]["Code"] == "404":
-            return False, "File does not exist"
+            return False, "File {key} does not exist"
         else:
-            return False, f"Error checking file: {e}"
+            return False, f"Error checking file {key}: {e}"
 
 
 def check_bucket_exists(s3, bucket_name):
