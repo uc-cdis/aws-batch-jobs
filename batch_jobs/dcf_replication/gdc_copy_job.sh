@@ -23,8 +23,9 @@ while [ $attempt -le $MAX_RETRIES ]; do
     # Download the file
     curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
          --header "X-Auth-Token: $GDC_TOKEN" \
-         --output "./mnt/$KEY.tmp" \
-         --data '{"stream": true}'
+         --output "./mnt/$KEY.tmp"
+         #TODO This option returns 405
+         #--data '{"stream": true}'
 
     # Verify download success
     if [ $? -eq 0 ]; then
