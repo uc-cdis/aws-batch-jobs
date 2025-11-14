@@ -1,6 +1,10 @@
 #/bin/bash
+echo "Starting the job.."
 set -euo pipefail  # Enable strict error handling
 # https://gist.github.com/mohanpedala/1e2ff5661761d3abd0385e8223e16425?permalink_comment_id=3935570#set--e--u--x--o-pipefail
+
+#Enable more tracing
+set -x
 
 aws configure set aws_access_key_id $ACCESS_KEY_ID
 aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
