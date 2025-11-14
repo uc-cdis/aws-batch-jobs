@@ -50,7 +50,8 @@ while [ $attempt -le $MAX_RETRIES ]; do
 
             # Move to final location
             echo "Uploading..."
-            mv "./mnt/$KEY.tmp" "./mnt/$KEY"
+            cp "./mnt/$KEY.tmp" "./mnt/$KEY"
+            rm "./mnt/$KEY.tmp"
             echo "Upload Complete"
 
             success=true
