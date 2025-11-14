@@ -4,12 +4,15 @@ set -euo pipefail  # Enable strict error handling
 
 aws configure set aws_access_key_id $ACCESS_KEY_ID
 aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
+echo "aws credentials configured."
 
 # Mount S3 bucket
 mount-s3 --allow-overwrite $DESTINATION_BUCKET ./mnt
+echo "s3 bucket mounted."
 
 # Create directory structure
 mkdir -p "./mnt/$(dirname "$KEY")"
+echo "created directory for object."
 
 # Download file with retries and validation
 MAX_RETRIES=5
