@@ -11,7 +11,7 @@ aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
 echo "aws credentials configured."
 
 # Mount S3 bucket
-mount-s3 --allow-overwrite $DESTINATION_BUCKET ./mnt
+mount-s3 --allow-overwrite $DESTINATION_BUCKET ./mnt --allow-delete
 echo "s3 bucket mounted."
 
 # Create directory structure
