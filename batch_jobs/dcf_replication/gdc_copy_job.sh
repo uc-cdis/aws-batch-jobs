@@ -43,10 +43,10 @@ while [ $attempt -le $MAX_RETRIES ]; do
 
             #Calculate MD5 checksum for additional validation
             if command -v md5sum >/dev/null 2>&1; then
-                cmd="md5sum "./mnt/$KEY.tmp" | cut -d' ' -f1"
+                cmd=$("md5sum "./mnt/$KEY.tmp" | cut -d' ' -f1")
                 downloaded_md5=$(eval $cmd)
                 if [ $? -ne 0 ]; then
-                    remount_bucket_run_cmd $DESTINATION_BUCKET "downloaded_md5=$(eval cmd)"
+                    remount_bucket_run_cmd $DESTINATION_BUCKET "downloaded_md5=$(eval $cmd)"
                 fi
                 echo "Downloaded file MD5: $downloaded_md5"
             fi
