@@ -51,8 +51,9 @@ def run_job(
 
     NUMBER_OF_THREADS = int(thread_count)
     MAX_RETRIES = int(max_retries)
+
     logging.info(
-        f"Submission Job started at {datetime.datetime.now()} with {NUMBER_OF_THREADS} threads and {MAX_RETRIES} retries."
+        f"Submission Job started at {int(time.time())} with {NUMBER_OF_THREADS} threads and {MAX_RETRIES} retries."
     )
     local_manifest = get_manifest_from_bucket(manifest_file)
     parsed_data = parse_manifest_file(local_manifest)
@@ -64,7 +65,7 @@ def run_job(
     logging.info(f"Submitted: {submitted} jobs")
     logging.info(f"Skipped: {skipped} files (already exist)")
     logging.info(f"Failed: {failed} submissions")
-    logging.info(f"Job ending time is {datetime.datetime.now()}")
+    logging.info(f"Job ending time is {int(time.time())}")
 
 
 def submit_job(job_queue, job_definition, file):
