@@ -11,7 +11,7 @@ aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
 echo "aws credentials configured."
 
 # Mount S3 bucket
-mount-bucket $DESTINATION_BUCKET
+mount-s3 --allow-overwrite --allow-delete $DESTINATION_BUCKET ./mnt
 echo "s3 bucket mounted."
 
 # Create directory structure
@@ -43,7 +43,7 @@ while [ $attempt -le $MAX_RETRIES ]; do
 
             #Calculate MD5 checksum for additional validation
             if command -v md5sum >/dev/null 2>&1; then
-                cmd=$("md5sum "./mnt/$KEY.tmp" | cut -d' ' -f1")
+                cmd="md5sum "./mnt/$KEY.tmp" | cut -d' ' -f1"
                 downloaded_md5=$(eval $cmd)
                 if [ $? -ne 0 ]; then
                     remount_bucket_run_cmd $DESTINATION_BUCKET "downloaded_md5=$(eval $cmd)"
