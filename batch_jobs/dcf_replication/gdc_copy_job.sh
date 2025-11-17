@@ -10,14 +10,19 @@ aws configure set aws_access_key_id $ACCESS_KEY_ID
 aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
 echo "aws credentials configured."
 
+# Mount S3 bucket
+mount-bucket $DESTINATION_BUCKET
+echo "s3 bucket mounted."
+
+# Create directory structure
+mkdir -p "./mnt/$(dirname "$KEY")"
+echo "created directory for object."
+
 # Download file with retries and validation
 MAX_RETRIES=5
 RETRY_DELAY=10
 attempt=1
 success=false
-TEMP_LOCATION="./temp"
-
-mkdir "$TEMP_LOCATION"
 
 while [ $attempt -le $MAX_RETRIES ]; do
     echo "Download attempt $attempt of $MAX_RETRIES"
@@ -25,34 +30,34 @@ while [ $attempt -le $MAX_RETRIES ]; do
     # Download the file
     curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
          --header "X-Auth-Token: $GDC_TOKEN" \
-         --output "$TEMP_LOCATION/$KEY.tmp"
+         --output "./mnt/$KEY.tmp"
          #TODO This option returns 405
          #--data '{"stream": true}'
 
     # Verify download success
     if [ $? -eq 0 ]; then
         # Verify file size
-        downloaded_size=$(stat -c%s "$TEMP_LOCATION/$KEY.tmp")
+        downloaded_size=$(stat -c%s "./mnt/$KEY.tmp")
         if [ "$downloaded_size" -eq "$SIZE" ]; then
             # Move to final location
             echo "Download validation passed: Size matches expected ($SIZE bytes)"
 
             #Calculate MD5 checksum for additional validation
             if command -v md5sum >/dev/null 2>&1; then
-                downloaded_md5=$(md5sum "$TEMP_LOCATION/$KEY.tmp" | cut -d' ' -f1)
+                cmd="md5sum "./mnt/$KEY.tmp" | cut -d' ' -f1"
+                downloaded_md5=$(eval $cmd)
+                if [ $? -ne 0 ]; then
+                    remount_bucket_run_cmd $DESTINATION_BUCKET "downloaded_md5=$(eval cmd)"
+                fi
                 echo "Downloaded file MD5: $downloaded_md5"
             fi
 
-            # Move to final location
-            mount_bucket $DESTINATION_BUCKET
-
-            # Create directory structure
-            mkdir -p "./mnt/$(dirname "$KEY")"
-            echo "created directory for object."
-
             echo "Uploading..."
-            cp "$TEMP_LOCATION/$KEY.tmp" "./mnt/$KEY"
-            rm "$TEMP_LOCATION/$KEY.tmp"
+            cp "./mnt/$KEY.tmp" "./mnt/$KEY"
+            if [ $? -ne 0 ]; then
+                remount_bucket_run_cmd $DESTINATION_BUCKET "cp "./mnt/$KEY.tmp" "./mnt/$KEY""
+            fi
+            rm "./mnt/$KEY.tmp"
             echo "Upload Complete"
 
             success=true
@@ -64,7 +69,7 @@ while [ $attempt -le $MAX_RETRIES ]; do
     fi
 
     # Cleanup failed attempt
-    rm -f "$TEMP_LOCATION/$KEY.tmp"
+    rm -f "./mnt/$KEY.tmp"
     sleep $RETRY_DELAY
     ((attempt++))
 done
@@ -77,19 +82,21 @@ fi
 echo "SUCCESS: File verified and transferred"
 exit 0
 
-mount_bucket () {
-    MOUNT_RETRIES=5
+remount_bucket_run_cmd () {
+    MOUNT_RETRIES=3
     MOUNT_DELAY=5 # seconds
 
     for i in $(seq 1 $MOUNT_RETRIES); do
-        echo "Attempt $i to mount S3 bucket $1..."
+        echo "attempt to run command.."
+        umount ./mnt
         # Mount S3 bucket
         mount-s3 --allow-overwrite --allow-delete $1 ./mnt
+        eval $2
         if [ $? -eq 0 ]; then
-            echo "s3 bucket mounted."
+            echo "Command run successfully."
             break
         else
-            echo "Mount failed. Retrying in $MOUNT_DELAY seconds..."
+            echo "command failed. Sleep then try again"
             sleep $MOUNT_DELAY
         fi
         if [ $i -eq $MOUNT_RETRIES ]; then
