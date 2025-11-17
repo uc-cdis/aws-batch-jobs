@@ -39,7 +39,6 @@ while [ $attempt -le $MAX_RETRIES ]; do
         # Verify file size
         downloaded_size=$(stat -c%s "./mnt/$KEY.tmp")
         if [ "$downloaded_size" -eq "$SIZE" ]; then
-            # Move to final location
             echo "Download validation passed: Size matches expected ($SIZE bytes)"
 
             #Calculate MD5 checksum for additional validation
@@ -52,6 +51,7 @@ while [ $attempt -le $MAX_RETRIES ]; do
                 echo "Downloaded file MD5: $downloaded_md5"
             fi
 
+            # Move to final location
             echo "Uploading..."
             cp "./mnt/$KEY.tmp" "./mnt/$KEY"
             if [ $? -ne 0 ]; then
@@ -87,10 +87,11 @@ remount_bucket_run_cmd () {
     MOUNT_DELAY=5 # seconds
 
     for i in $(seq 1 $MOUNT_RETRIES); do
-        echo "attempt to run command.."
+        echo "Remount s3 bucket.."
         umount ./mnt
         # Mount S3 bucket
         mount-s3 --allow-overwrite --allow-delete $1 ./mnt
+        echo "attempt to run command.."
         eval $2
         if [ $? -eq 0 ]; then
             echo "Command run successfully."
