@@ -111,6 +111,7 @@ def submit_job(job_queue, job_definition, file):
                         {"value": file["id"], "name": "ID"},
                         {"value": file["file_name"], "name": "FILE_NAME"},
                         {"value": file["size"], "name": "SIZE"},
+                        {"value": file["md5"], "name": "MD5SUM"},
                         {
                             "value": file["destination_bucket"],
                             "name": "DESTINATION_BUCKET",

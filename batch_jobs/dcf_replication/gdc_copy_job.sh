@@ -3,6 +3,31 @@ echo "Starting the job.."
 set -uxo pipefail  # Enable strict error handling
 # https://gist.github.com/mohanpedala/1e2ff5661761d3abd0385e8223e16425?permalink_comment_id=3935570#set--e--u--x--o-pipefail
 
+remount_bucket_run_cmd () {
+    MOUNT_RETRIES=3
+    MOUNT_DELAY=5 # seconds
+
+    for i in $(seq 1 $MOUNT_RETRIES); do
+        echo "Remount s3 bucket.."
+        umount ./mnt
+        # Mount S3 bucket
+        mount-s3 --allow-overwrite --allow-delete $1 ./mnt
+        echo "attempt to run command.."
+        eval $2
+        if [ $? -eq 0 ]; then
+            echo "Command run successfully."
+            break
+        else
+            echo "command failed. Sleep then try again"
+            sleep $MOUNT_DELAY
+        fi
+        if [ $i -eq $MOUNT_RETRIES ]; then
+            echo "Mount failed after $MOUNT_RETRIES attempts."
+            exit 1
+        fi
+    done
+}
+
 aws configure set aws_access_key_id $ACCESS_KEY_ID
 aws configure set aws_secret_access_key $SECRET_ACCESS_KEY
 echo "aws credentials configured."
@@ -16,7 +41,7 @@ mkdir -p "./mnt/$(dirname "$KEY")"
 echo "created directory for object."
 
 # Download file with retries and validation
-MAX_RETRIES=5
+MAX_RETRIES=3
 RETRY_DELAY=10
 attempt=1
 success=false
@@ -45,21 +70,27 @@ while [ $attempt -le $MAX_RETRIES ]; do
                 if [ $? -ne 0 ]; then
                     remount_bucket_run_cmd $DESTINATION_BUCKET "downloaded_md5=$(eval $cmd)"
                 fi
-                echo "Downloaded file MD5: $downloaded_md5"
+
+                if [ "$downloaded_md5" = "$MD5SUM" ]; then
+                    echo "Download validation passed, md5 is $downloaded_md5"
+                    # Move to final location
+                    echo "Uploading..."
+                    cp "./mnt/$KEY.tmp" "./mnt/$KEY"
+                    if [ $? -ne 0 ]; then
+                        remount_bucket_run_cmd $DESTINATION_BUCKET "cp "./mnt/$KEY.tmp" "./mnt/$KEY""
+                    fi
+                    rm "./mnt/$KEY.tmp"
+                    echo "Upload Complete"
+
+                    success=true
+                    umount "./mnt"
+                    break
+                else
+                    echo "md5sum mismatch: Expected $MD5SUM, got $downloaded_md5"
+                fi
             fi
 
-            # Move to final location
-            echo "Uploading..."
-            cp "./mnt/$KEY.tmp" "./mnt/$KEY"
-            if [ $? -ne 0 ]; then
-                remount_bucket_run_cmd $DESTINATION_BUCKET "cp "./mnt/$KEY.tmp" "./mnt/$KEY""
-            fi
-            rm "./mnt/$KEY.tmp"
-            echo "Upload Complete"
 
-            success=true
-            umount "./mnt"
-            break
         else
             echo "Size mismatch: Expected $SIZE bytes, got $downloaded_size bytes"
         fi
@@ -78,28 +109,3 @@ fi
 
 echo "SUCCESS: File verified and transferred"
 exit 0
-
-remount_bucket_run_cmd () {
-    MOUNT_RETRIES=3
-    MOUNT_DELAY=5 # seconds
-
-    for i in $(seq 1 $MOUNT_RETRIES); do
-        echo "Remount s3 bucket.."
-        umount ./mnt
-        # Mount S3 bucket
-        mount-s3 --allow-overwrite --allow-delete $1 ./mnt
-        echo "attempt to run command.."
-        eval $2
-        if [ $? -eq 0 ]; then
-            echo "Command run successfully."
-            break
-        else
-            echo "command failed. Sleep then try again"
-            sleep $MOUNT_DELAY
-        fi
-        if [ $i -eq $MOUNT_RETRIES ]; then
-            echo "Mount failed after $MOUNT_RETRIES attempts."
-            exit 1
-        fi
-    done
-}
