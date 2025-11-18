@@ -1,6 +1,6 @@
 #/bin/bash
 echo "Starting the job.."
-set -euxo pipefail  # Enable strict error handling
+set -uxo pipefail  # Enable strict error handling
 # https://gist.github.com/mohanpedala/1e2ff5661761d3abd0385e8223e16425?permalink_comment_id=3935570#set--e--u--x--o-pipefail
 
 aws configure set aws_access_key_id $ACCESS_KEY_ID
@@ -41,7 +41,7 @@ while [ $attempt -le $MAX_RETRIES ]; do
             #Calculate MD5 checksum for additional validation
             if command -v md5sum >/dev/null 2>&1; then
                 cmd="md5sum "./mnt/$KEY.tmp" | cut -d' ' -f1"
-                downloaded_md5=$(eval $cmd) | true
+                downloaded_md5=$(eval $cmd)
                 if [ $? -ne 0 ]; then
                     remount_bucket_run_cmd $DESTINATION_BUCKET "downloaded_md5=$(eval $cmd)"
                 fi
@@ -50,7 +50,7 @@ while [ $attempt -le $MAX_RETRIES ]; do
 
             # Move to final location
             echo "Uploading..."
-            cp "./mnt/$KEY.tmp" "./mnt/$KEY" | true
+            cp "./mnt/$KEY.tmp" "./mnt/$KEY"
             if [ $? -ne 0 ]; then
                 remount_bucket_run_cmd $DESTINATION_BUCKET "cp "./mnt/$KEY.tmp" "./mnt/$KEY""
             fi
