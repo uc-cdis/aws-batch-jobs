@@ -171,7 +171,6 @@ def submit_jobs(file_info, job_queue, job_definition, output_manifest_bucket):
             output_manifest.append(convert_file_info_to_output_manifest(result))
         elif result[JOB_STATUS_KEY] == "SKIPPED":
             skipped_count += 1
-            output_manifest.append(convert_file_info_to_output_manifest(result))
         elif result[JOB_STATUS_KEY] == "FAILED":
             failed_count += 1
 
