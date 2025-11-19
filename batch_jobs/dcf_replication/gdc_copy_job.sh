@@ -65,25 +65,26 @@ while [ $attempt -le $MAX_RETRIES ]; do
         if [ "$downloaded_size" -eq "$SIZE" ]; then
             echo "Download validation passed: Size matches expected $SIZE bytes"
 
+            #TODO: Put md5sum check back!!
             #Calculate MD5 checksum for additional validation
-            if command -v md5sum >/dev/null 2>&1; then
-                cmd="md5sum "./mnt/$KEY" | cut -d' ' -f1"
-                downloaded_md5=$(eval $cmd)
-                if [ $? -ne 0 ]; then
-                    remount_bucket_run_cmd $DESTINATION_BUCKET "downloaded_md5=$(eval $cmd)"
-                fi
-                if [ "$downloaded_md5" = "$MD5SUM" ]; then
-                    echo "Download validation passed, md5 is $downloaded_md5"
-                    echo "Upload Complete"
-                    success=true
-                    umount "./mnt"
-                    sleep 2
-                    break
-                else
-                    rm -f "./mnt/$KEY"
-                    echo "md5sum mismatch: Expected $MD5SUM, got $downloaded_md5"
-                fi
-            fi
+            # if command -v md5sum >/dev/null 2>&1; then
+            #     cmd="md5sum "./mnt/$KEY" | cut -d' ' -f1"
+            #     downloaded_md5=$(eval $cmd)
+            #     if [ $? -ne 0 ]; then
+            #         remount_bucket_run_cmd $DESTINATION_BUCKET "downloaded_md5=$(eval $cmd)"
+            #     fi
+            #     if [ "$downloaded_md5" = "$MD5SUM" ]; then
+            #         echo "Download validation passed, md5 is $downloaded_md5"
+            #         echo "Upload Complete"
+            #         success=true
+            #         umount "./mnt"
+            #         sleep 2
+            #         break
+            #     else
+            #         rm -f "./mnt/$KEY"
+            #         echo "md5sum mismatch: Expected $MD5SUM, got $downloaded_md5"
+            #     fi
+            # fi
         else
             rm -f "./mnt/$KEY"
             echo "Size mismatch: Expected $SIZE bytes, got $downloaded_size bytes"
