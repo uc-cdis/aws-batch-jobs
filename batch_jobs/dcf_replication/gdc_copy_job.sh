@@ -74,16 +74,15 @@ while [ $attempt -le $MAX_RETRIES ]; do
             #     fi
             #     if [ "$downloaded_md5" = "$MD5SUM" ]; then
             #         echo "Download validation passed, md5 is $downloaded_md5"
-            #         echo "Upload Complete"
-            #         success=true
-            #         umount "./mnt"
-            #         sleep 2
-            #         break
             #     else
             #         rm -f "./mnt/$KEY"
             #         echo "md5sum mismatch: Expected $MD5SUM, got $downloaded_md5"
             #     fi
             # fi
+            echo "Upload Complete"
+            success=true
+            umount "./mnt"
+            sleep 2
             break
         else
             rm -f "./mnt/$KEY"
