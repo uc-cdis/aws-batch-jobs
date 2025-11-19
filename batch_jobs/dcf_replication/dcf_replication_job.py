@@ -65,6 +65,7 @@ def run_job(
     logging.info(f"Submitted: {submitted} jobs")
     logging.info(f"Skipped: {skipped} files (already exist)")
     logging.info(f"Failed: {failed} submissions")
+    logging.info(f"Job starting time is {int(time.time())}")
     logging.info(f"Job ending time is {int(time.time())}")
 
 

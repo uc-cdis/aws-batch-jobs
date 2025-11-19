@@ -54,7 +54,7 @@ while [ $attempt -le $MAX_RETRIES ]; do
     # Download the file
     curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
          --header "X-Auth-Token: $GDC_TOKEN" \
-         --output "./mnt/$KEY
+         --output "./mnt/$KEY"
          #TODO This option returns 405
          #--data '{"stream": true}'
 
@@ -63,7 +63,7 @@ while [ $attempt -le $MAX_RETRIES ]; do
         # Verify file size
         downloaded_size=$(stat -c%s "./mnt/$KEY")
         if [ "$downloaded_size" -eq "$SIZE" ]; then
-            echo "Download validation passed: Size matches expected ($SIZE bytes)"
+            echo "Download validation passed: Size matches expected $SIZE bytes"
 
             #Calculate MD5 checksum for additional validation
             if command -v md5sum >/dev/null 2>&1; then
