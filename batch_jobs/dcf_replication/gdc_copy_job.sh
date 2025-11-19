@@ -10,10 +10,11 @@ remount_bucket_run_cmd () {
     for i in $(seq 1 $MOUNT_RETRIES); do
         echo "Remount s3 bucket.."
         umount ./mnt
+        sleep 2
         # Mount S3 bucket
         mount-s3 --allow-overwrite --allow-delete $1 ./mnt
         echo "attempt to run command.."
-        eval $2
+        eval "$2"
         if [ $? -eq 0 ]; then
             echo "Command run successfully."
             break
@@ -34,6 +35,7 @@ echo "aws credentials configured."
 
 # Mount S3 bucket
 mount-s3 --allow-overwrite --allow-delete $DESTINATION_BUCKET ./mnt
+sleep 2
 echo "s3 bucket mounted."
 
 # Create directory structure
@@ -52,52 +54,43 @@ while [ $attempt -le $MAX_RETRIES ]; do
     # Download the file
     curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
          --header "X-Auth-Token: $GDC_TOKEN" \
-         --output "./mnt/$KEY.tmp"
+         --output "./mnt/$KEY
          #TODO This option returns 405
          #--data '{"stream": true}'
 
     # Verify download success
     if [ $? -eq 0 ]; then
         # Verify file size
-        downloaded_size=$(stat -c%s "./mnt/$KEY.tmp")
+        downloaded_size=$(stat -c%s "./mnt/$KEY")
         if [ "$downloaded_size" -eq "$SIZE" ]; then
             echo "Download validation passed: Size matches expected ($SIZE bytes)"
 
             #Calculate MD5 checksum for additional validation
             if command -v md5sum >/dev/null 2>&1; then
-                cmd="md5sum "./mnt/$KEY.tmp" | cut -d' ' -f1"
+                cmd="md5sum "./mnt/$KEY" | cut -d' ' -f1"
                 downloaded_md5=$(eval $cmd)
                 if [ $? -ne 0 ]; then
                     remount_bucket_run_cmd $DESTINATION_BUCKET "downloaded_md5=$(eval $cmd)"
                 fi
-
                 if [ "$downloaded_md5" = "$MD5SUM" ]; then
                     echo "Download validation passed, md5 is $downloaded_md5"
-                    # Move to final location
-                    echo "Uploading..."
-                    cp "./mnt/$KEY.tmp" "./mnt/$KEY"
-                    if [ $? -ne 0 ]; then
-                        remount_bucket_run_cmd $DESTINATION_BUCKET "cp "./mnt/$KEY.tmp" "./mnt/$KEY""
-                    fi
-                    rm "./mnt/$KEY.tmp"
                     echo "Upload Complete"
-
                     success=true
                     umount "./mnt"
+                    sleep 2
                     break
                 else
+                    rm -f "./mnt/$KEY"
                     echo "md5sum mismatch: Expected $MD5SUM, got $downloaded_md5"
                 fi
             fi
-
-
         else
+            rm -f "./mnt/$KEY"
             echo "Size mismatch: Expected $SIZE bytes, got $downloaded_size bytes"
         fi
     fi
 
     # Cleanup failed attempt
-    rm -f "./mnt/$KEY.tmp"
     sleep $RETRY_DELAY
     ((attempt++))
 done

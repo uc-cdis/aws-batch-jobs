@@ -17,12 +17,13 @@ def parse_arguments():
     dcf_replication_cmd.add_argument(
         "--thread_count",
         required=True,
+        default=3,
         help="Thread pool for number of concurrent files copied",
     )
     dcf_replication_cmd.add_argument(
         "--max_retries",
         required=False,
-        default=10,
+        default=5,
         help="Max retry attempt until a file copy is considered a failed",
     )
 
