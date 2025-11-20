@@ -5,9 +5,9 @@ import json
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 INDEXD = {
-    "host": "http://localhost:8000",
-    "version": "v0",
-    "auth": {"username": "test", "password": "test"},
+    "host": "",
+    "version": "",
+    "auth": {"username": "", "password": ""},
 }
 
 SLACK_URL = ""
