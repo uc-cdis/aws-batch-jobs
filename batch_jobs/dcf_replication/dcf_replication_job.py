@@ -132,10 +132,10 @@ def submit_job(job_queue, job_definition, file):
                 )
                 sys.exit(1)
             if e.response["Error"]["Code"] != "TooManyRequestsException":
+                logging.info("TooManyRequestsException. Sleep and retry...")
+            else:
                 n_tries += 1
                 logging.info("{}. Retry {}".format(e, n_tries))
-            else:
-                logging.info("TooManyRequestsException. Sleep and retry...")
 
         time.sleep(2**n_tries)
     file[JOB_STATUS_KEY] = "FAILED"
@@ -192,7 +192,9 @@ def parse_manifest_file(manifest_file):
                 fi["id"] = row["id"]
                 fi["file_name"] = row["file_name"]
                 fi["size"] = row["size"]
-                fi["acl"] = row["acl"]
+                fi["acl"] = (
+                    row["acl"].replace("u'", "'").strip()
+                )  # to normalize the acl
                 fi["md5"] = row["md5"]
                 fi["baseid"] = row["baseid"]
                 fi["url"] = row["url"]
@@ -215,32 +217,30 @@ def map_project_to_bucket(fi):
             f"Project ID {fi['project_id']} not found in the mapping. Available projects: {list(PROJECT_ACL.keys())}"
         )
 
-    if fi["acl"] == "['open']" or fi["acl"] == "[u'open']":
+    if fi["acl"] == "['open']":
         if "target" in bucket:
             bucket = "gdc-target-phs000218-2-open"
-        elif bucket not in POSTFIX_1_EXCEPTION and bucket not in POSTFIX_2_EXCEPTION:
-            bucket += "-2-open"
-        elif bucket in POSTFIX_1_EXCEPTION:
-            bucket += "-open"
-        elif bucket in POSTFIX_2_EXCEPTION:
-            bucket += "-2-open"
         else:
-            raise ValueError(
-                f"Bucket {fi['bucket']} not recognized. Expected 'open' or 'controlled'."
-            )
+            if bucket not in POSTFIX_1_EXCEPTION and bucket not in POSTFIX_2_EXCEPTION:
+                bucket += "-2-open"
+            elif bucket in POSTFIX_1_EXCEPTION:
+                bucket += "-open"
+            elif bucket in POSTFIX_2_EXCEPTION:
+                bucket += "-2-open"
     elif fi["acl"] != "['open']":
         if "target" in bucket:
             bucket = "target-controlled"
-        elif bucket not in POSTFIX_1_EXCEPTION and bucket not in POSTFIX_2_EXCEPTION:
-            bucket += "-controlled"
-        elif bucket in POSTFIX_1_EXCEPTION:
-            bucket += "-controlled"
-        elif bucket in POSTFIX_2_EXCEPTION:
-            bucket += "-2-controlled"
         else:
-            raise ValueError(
-                f"Bucket {fi['bucket']} not recognized. Expected 'open' or 'controlled'."
-            )
+            if bucket not in POSTFIX_1_EXCEPTION and bucket not in POSTFIX_2_EXCEPTION:
+                bucket += "-controlled"
+            elif bucket in POSTFIX_1_EXCEPTION:
+                bucket += "-controlled"
+            elif bucket in POSTFIX_2_EXCEPTION:
+                bucket += "-2-controlled"
+    else:
+        raise ValueError(
+            f"Bucket {fi['bucket']} not recognized. Expected 'open' or 'controlled'."
+        )
     return bucket
 
 
@@ -320,12 +320,12 @@ def convert_file_info_to_output_manifest(file_info):
     acls = []
     authz = []
     # Process acl and set authz value
-    if file_info.get("acl") in {"[u'open']", "['open']"}:
+    if file_info.get("acl") == "['open']":
         acls = ["*"]
         authz = ["/open"]
     else:
         acls = [
-            acl.strip().replace("u'", "").replace("'", "")
+            acl.strip().replace("'", "")
             for acl in file_info.get("acl", "").strip()[1:-1].split(",")
         ]
         for acl in acls:
