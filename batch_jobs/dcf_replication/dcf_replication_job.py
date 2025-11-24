@@ -22,8 +22,6 @@ from batch_jobs.bin.settings import (
 logging.basicConfig(level=logging.INFO)
 # logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
-NUMBER_OF_THREADS = 16
-MAX_RETRIES = 10
 JOB_STATUS_KEY = "job_status"
 REGION = os.environ.get("REGION", "us-east-1")
 
@@ -81,7 +79,7 @@ def submit_job(job_queue, job_definition, file):
                 file["destination_bucket"]
             )
         )
-        file[JOB_STATUS_KEY] = "SKIPPED"
+        file[JOB_STATUS_KEY] = "FAILED"
         return file
 
     # Pre-check if file already exists
@@ -92,7 +90,6 @@ def submit_job(job_queue, job_definition, file):
         int(file["size"]),
         file["md5"],
     )
-    print(f"file_key is {key}, result is {message}")
 
     if exists:
         logging.info(f"Skipping {key}: {message}")
@@ -160,7 +157,9 @@ def submit_jobs(file_info, job_queue, job_definition, output_manifest_bucket):
     submitted_count = 0
     skipped_count = 0
     failed_count = 0
-    output_manifest = []
+    submitted_output_manifest = []
+    skipped_output_manifest = []
+    failed_output_manifest = []
 
     with Pool(NUMBER_OF_THREADS) as pool:
         results = pool.map(par_submit_job, file_info)
@@ -168,13 +167,25 @@ def submit_jobs(file_info, job_queue, job_definition, output_manifest_bucket):
     for result in results:
         if result[JOB_STATUS_KEY] == "SUBMITTED":
             submitted_count += 1
-            output_manifest.append(convert_file_info_to_output_manifest(result))
+            submitted_output_manifest.append(
+                convert_file_info_to_output_manifest(result)
+            )
         elif result[JOB_STATUS_KEY] == "SKIPPED":
             skipped_count += 1
+            skipped_output_manifest.append(convert_file_info_to_output_manifest(result))
         elif result[JOB_STATUS_KEY] == "FAILED":
             failed_count += 1
+            failed_output_manifest.append(convert_file_info_to_output_manifest(result))
 
-    write_output_manifest_to_s3_file(output_manifest, output_manifest_bucket)
+    write_output_manifest_to_s3_file(
+        submitted_output_manifest, output_manifest_bucket, "dcf_aws_batch_submitted"
+    )
+    write_output_manifest_to_s3_file(
+        skipped_output_manifest, output_manifest_bucket, "dcf_aws_batch_skipped"
+    )
+    write_output_manifest_to_s3_file(
+        failed_output_manifest, output_manifest_bucket, "dcf_aws_batch_failed"
+    )
 
     return submitted_count, skipped_count, failed_count
 
@@ -356,13 +367,13 @@ def convert_file_info_to_output_manifest(file_info):
     }
 
 
-def write_output_manifest_to_s3_file(data, bucket_name):
+def write_output_manifest_to_s3_file(data, bucket_name, file_prefix):
     """
     Write output manifest data to tsv file to s3 location
     """
     try:
         time_str = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
-        key = f"dcf_aws_batch_output_manifest_{time_str}.tsv"
+        key = f"{file_prefix}_{time_str}.tsv"
         session = boto3.Session(profile_name="default")
         s3 = session.client("s3")
         # Use the s3 client that was passed to the function
