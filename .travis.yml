@@ -1,14 +1,34 @@
 language: python
-
+dist: xenial
 python:
-  - "3.12"
+  - 3.12
 
 cache: pip
 
 install:
-  - pip install -r requirements.txt
-  - pip install -r dev-requirements.txt
-
+- curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py
+  | python -
+- source $HOME/.poetry/env
+- which poetry
+- poetry install -vv
+- poetry show
 script:
-  - python --version
-  - py.test -vv tests/
+- poetry run pytest -vv ./test
+before_deploy:
+- poetry config http-basic.pypi $PYPI_USER $PYPI_PASSWORD
+- poetry build
+
+deploy:
+  provider: script
+  script: poetry publish
+  on:
+    python: 3.9
+    repo: uc-cdis/aws-batch-jobs
+    tags: true
+after_deploy:
+- poetry run pip install gen3git
+- poetry run gen3git release
+
+env:
+  global:
+  - PIPENV_IGNORE_VIRTUALENVS=1
