@@ -9,12 +9,9 @@ python:
 cache: pip
 
 install:
-- curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py
-  | python -
-- source $HOME/.poetry/env
-- which poetry
-- poetry install -vv
-- poetry show
+- pip install poetry
+- poetry install -vv --no-interaction
+- poetry show -vv
 script:
 - poetry run pytest -vv ./test
 before_deploy:
