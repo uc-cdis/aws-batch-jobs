@@ -30,7 +30,7 @@ version = "1.41.3"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.9"
-groups = ["main"]
+groups = ["main", "dev"]
 files = [
     {file = "boto3-1.41.3-py3-none-any.whl", hash = "sha256:10a3f5a72e071c362f5aa8443bd949edc31b7494c48a315ccdab14b1c387a1fd"},
     {file = "boto3-1.41.3.tar.gz", hash = "sha256:8a89f3900a356879022c1600f72cbb3d8b85708f094d2d08a461bd193d0b07ca"},
@@ -50,7 +50,7 @@ version = "1.41.3"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.9"
-groups = ["main"]
+groups = ["main", "dev"]
 files = [
     {file = "botocore-1.41.3-py3-none-any.whl", hash = "sha256:fe2379b30cc726e9e44bf47c3834fe208b85f7eaa57b934ab05f305ca9d05a8b"},
     {file = "botocore-1.41.3.tar.gz", hash = "sha256:1c6ad338f445c9bf02e231bfa302239d60520ec6dd88ded3206b34dca100103c"},
@@ -73,7 +73,7 @@ version = "2025.11.12"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.7"
-groups = ["main"]
+groups = ["dev"]
 files = [
     {file = "certifi-2025.11.12-py3-none-any.whl", hash = "sha256:97de8790030bbd5c2d96b7ec782fc2f7820ef8dba6db909ccf95449f2d062d4b"},
     {file = "certifi-2025.11.12.tar.gz", hash = "sha256:d8ab5478f2ecd78af242878415affce761ca6bc54a22a27e026d7c25357c3316"},
@@ -85,7 +85,7 @@ version = "2.0.0"
 description = "Foreign Function Interface for Python calling C code."
 optional = false
 python-versions = ">=3.9"
-groups = ["main"]
+groups = ["dev"]
 markers = "platform_python_implementation != \"PyPy\""
 files = [
     {file = "cffi-2.0.0-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:0cf2d91ecc3fcc0625c2c530fe004f82c110405f101548512cce44322fa8ac44"},
@@ -183,7 +183,7 @@ version = "3.4.4"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
 optional = false
 python-versions = ">=3.7"
-groups = ["main"]
+groups = ["dev"]
 files = [
     {file = "charset_normalizer-3.4.4-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:e824f1492727fa856dd6eda4f7cee25f8518a12f3c4a56a74e8095695089cf6d"},
     {file = "charset_normalizer-3.4.4-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:4bd5d4137d500351a30687c2d3971758aac9a19208fc110ccb9d7188fbe709e8"},
@@ -319,7 +319,7 @@ version = "43.0.3"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
 optional = false
 python-versions = ">=3.7"
-groups = ["main"]
+groups = ["dev"]
 markers = "python_version == \"3.9\""
 files = [
     {file = "cryptography-43.0.3-cp37-abi3-macosx_10_9_universal2.whl", hash = "sha256:bf7a1932ac4176486eab36a19ed4c0492da5d97123f1406cf15e41b05e787d2e"},
@@ -370,7 +370,7 @@ version = "46.0.3"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
 optional = false
 python-versions = "!=3.9.0,!=3.9.1,>=3.8"
-groups = ["main"]
+groups = ["dev"]
 markers = "python_version >= \"3.10\""
 files = [
     {file = "cryptography-46.0.3-cp311-abi3-macosx_10_9_universal2.whl", hash = "sha256:109d4ddfadf17e8e7779c39f9b18111a09efb969a301a31e987416a0191ed93a"},
@@ -449,7 +449,7 @@ version = "3.11"
 description = "Internationalized Domain Names in Applications (IDNA)"
 optional = false
 python-versions = ">=3.8"
-groups = ["main"]
+groups = ["dev"]
 files = [
     {file = "idna-3.11-py3-none-any.whl", hash = "sha256:771a87f49d9defaf64091e6e6fe9c18d4833f140bd19464795bc32d966ca37ea"},
     {file = "idna-3.11.tar.gz", hash = "sha256:795dafcc9c04ed0c1fb032c2aa73654d8e8c5023a7df64a53f39190ada629902"},
@@ -490,7 +490,7 @@ version = "3.1.6"
 description = "A very fast and expressive template engine."
 optional = false
 python-versions = ">=3.7"
-groups = ["main"]
+groups = ["dev"]
 files = [
     {file = "jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"},
     {file = "jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d"},
@@ -508,7 +508,7 @@ version = "1.0.1"
 description = "JSON Matching Expressions"
 optional = false
 python-versions = ">=3.7"
-groups = ["main"]
+groups = ["main", "dev"]
 files = [
     {file = "jmespath-1.0.1-py3-none-any.whl", hash = "sha256:02e2e4cc71b5bcab88332eebf907519190dd9e6e82107fa7f83b1003a6252980"},
     {file = "jmespath-1.0.1.tar.gz", hash = "sha256:90261b206d6defd58fdd5e85f478bf633a2901798906be2ad389150c5c60edbe"},
@@ -520,7 +520,7 @@ version = "3.0.3"
 description = "Safely add untrusted strings to HTML/XML markup."
 optional = false
 python-versions = ">=3.9"
-groups = ["main"]
+groups = ["dev"]
 files = [
     {file = "markupsafe-3.0.3-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:2f981d352f04553a7171b8e44369f2af4055f888dfb147d55e42d29e29e74559"},
     {file = "markupsafe-3.0.3-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:e1c1493fb6e50ab01d20a22826e57520f1284df32f2d8601fdd90b6304601419"},
@@ -619,7 +619,7 @@ version = "5.1.17"
 description = "A library that allows you to easily mock out tests based on AWS infrastructure"
 optional = false
 python-versions = ">=3.9"
-groups = ["main"]
+groups = ["dev"]
 files = [
     {file = "moto-5.1.17-py3-none-any.whl", hash = "sha256:7c59e92f6fc50a425b718ab1d490eee570dc0cf3dc7dc3d7ab222b8f1e1cb7fc"},
     {file = "moto-5.1.17.tar.gz", hash = "sha256:31b832de25846529963bcb273448240cae34b9cbaff0bdae15f75c716c08a5f8"},
@@ -705,7 +705,7 @@ version = "2.23"
 description = "C parser in Python"
 optional = false
 python-versions = ">=3.8"
-groups = ["main"]
+groups = ["dev"]
 markers = "platform_python_implementation != \"PyPy\" and implementation_name != \"PyPy\""
 files = [
     {file = "pycparser-2.23-py3-none-any.whl", hash = "sha256:e5c6e8d3fbad53479cab09ac03729e0a9faf2bee3db8208a550daf5af81a5934"},
@@ -743,7 +743,7 @@ version = "2.9.0.post0"
 description = "Extensions to the standard Python datetime module"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
-groups = ["main"]
+groups = ["main", "dev"]
 files = [
     {file = "python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3"},
     {file = "python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"},
@@ -758,7 +758,7 @@ version = "6.0.3"
 description = "YAML parser and emitter for Python"
 optional = false
 python-versions = ">=3.8"
-groups = ["main"]
+groups = ["dev"]
 files = [
     {file = "PyYAML-6.0.3-cp38-cp38-macosx_10_13_x86_64.whl", hash = "sha256:c2514fceb77bc5e7a2f7adfaa1feb2fb311607c9cb518dbc378688ec73d8292f"},
     {file = "PyYAML-6.0.3-cp38-cp38-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:9c57bb8c96f6d1808c030b1687b9b5fb476abaa47f0db9c0101f5e9f394e97f4"},
@@ -841,7 +841,7 @@ version = "2.32.5"
 description = "Python HTTP for Humans."
 optional = false
 python-versions = ">=3.9"
-groups = ["main"]
+groups = ["dev"]
 files = [
     {file = "requests-2.32.5-py3-none-any.whl", hash = "sha256:2462f94637a34fd532264295e186976db0f5d453d1cdd31473c85a6a161affb6"},
     {file = "requests-2.32.5.tar.gz", hash = "sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf"},
@@ -863,7 +863,7 @@ version = "0.25.8"
 description = "A utility library for mocking out the `requests` Python library."
 optional = false
 python-versions = ">=3.8"
-groups = ["main"]
+groups = ["dev"]
 files = [
     {file = "responses-0.25.8-py3-none-any.whl", hash = "sha256:0c710af92def29c8352ceadff0c3fe340ace27cf5af1bbe46fb71275bcd2831c"},
     {file = "responses-0.25.8.tar.gz", hash = "sha256:9374d047a575c8f781b94454db5cab590b6029505f488d12899ddb10a4af1cf4"},
@@ -883,7 +883,7 @@ version = "0.15.0"
 description = "An Amazon S3 Transfer Manager"
 optional = false
 python-versions = ">=3.9"
-groups = ["main"]
+groups = ["main", "dev"]
 files = [
     {file = "s3transfer-0.15.0-py3-none-any.whl", hash = "sha256:6f8bf5caa31a0865c4081186689db1b2534cef721d104eb26101de4b9d6a5852"},
     {file = "s3transfer-0.15.0.tar.gz", hash = "sha256:d36fac8d0e3603eff9b5bfa4282c7ce6feb0301a633566153cbd0b93d11d8379"},
@@ -901,7 +901,7 @@ version = "1.17.0"
 description = "Python 2 and 3 compatibility utilities"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
-groups = ["main"]
+groups = ["main", "dev"]
 files = [
     {file = "six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"},
     {file = "six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81"},
@@ -925,7 +925,7 @@ version = "4.15.0"
 description = "Backported and Experimental Type Hints for Python 3.9+"
 optional = false
 python-versions = ">=3.9"
-groups = ["main"]
+groups = ["dev"]
 markers = "python_version >= \"3.10\" and python_full_version < \"3.11.0\""
 files = [
     {file = "typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548"},
@@ -938,7 +938,7 @@ version = "1.26.20"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
-groups = ["main"]
+groups = ["main", "dev"]
 markers = "python_version == \"3.9\""
 files = [
     {file = "urllib3-1.26.20-py2.py3-none-any.whl", hash = "sha256:0ed14ccfbf1c30a9072c7ca157e4319b70d65f623e91e7b32fadb2853431016e"},
@@ -956,7 +956,7 @@ version = "2.5.0"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.9"
-groups = ["main"]
+groups = ["main", "dev"]
 markers = "python_version >= \"3.10\""
 files = [
     {file = "urllib3-2.5.0-py3-none-any.whl", hash = "sha256:e6b01673c0fa6a13e374b50871808eb3bf7046c4b125b216f6bf1cc604cff0dc"},
@@ -975,7 +975,7 @@ version = "3.1.3"
 description = "The comprehensive WSGI web application library."
 optional = false
 python-versions = ">=3.9"
-groups = ["main"]
+groups = ["dev"]
 files = [
     {file = "werkzeug-3.1.3-py3-none-any.whl", hash = "sha256:54b78bf3716d19a65be4fceccc0d1d7b89e608834989dfae50ea87564639213e"},
     {file = "werkzeug-3.1.3.tar.gz", hash = "sha256:60723ce945c19328679790e3282cc758aa4a6040e4bb330f53d30fa546d44746"},
@@ -993,7 +993,7 @@ version = "1.0.2"
 description = "Makes working with XML feel like you are working with JSON"
 optional = false
 python-versions = ">=3.9"
-groups = ["main"]
+groups = ["dev"]
 files = [
     {file = "xmltodict-1.0.2-py3-none-any.whl", hash = "sha256:62d0fddb0dcbc9f642745d8bbf4d81fd17d6dfaec5a15b5c1876300aad92af0d"},
     {file = "xmltodict-1.0.2.tar.gz", hash = "sha256:54306780b7c2175a3967cad1db92f218207e5bc1aba697d887807c0fb68b7649"},
@@ -1005,4 +1005,4 @@ test = ["pytest", "pytest-cov"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9"
-content-hash = "168ce6d6cc38a9fc0ca5aa684e6b5752717129f0fcfd88789f7f5661a7dedd29"
+content-hash = "ed66afccc91d4df9ad276f2f42e6da3a3162dca1d3b2e9553a88c0180b66f2ac"

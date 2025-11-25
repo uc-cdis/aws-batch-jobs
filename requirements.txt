@@ -1,3 +1,0 @@
-boto3>=1.40.2,<2.0
-moto
-pytest
