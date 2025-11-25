@@ -24,6 +24,8 @@ logging.basicConfig(level=logging.INFO)
 
 JOB_STATUS_KEY = "job_status"
 REGION = os.environ.get("REGION", "us-east-1")
+NUMBER_OF_THREADS = 5
+MAX_RETRIES = 3
 
 
 def run_job(
