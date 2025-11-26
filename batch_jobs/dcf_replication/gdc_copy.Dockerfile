@@ -1,11 +1,14 @@
-FROM quay.io/cdis/awshelper:master
+ARG AZLINUX_BASE_VERSION=master
+
+FROM quay.io/cdis/python-nginx-al:${AZLINUX_BASE_VERSION} AS base
 
 COPY . /dcf_replication
 
 WORKDIR /dcf_replication
 
 RUN pip3 install awscli
-RUN pip install -r requirements.txt
+RUN poetry config virtualenvs.create false
+RUN poetry install --no-dev --no-interaction --no-ansi
 
 USER root
 
