@@ -4,7 +4,7 @@ import json
 import os
 import pytest
 import boto3
-from moto import mock_sqs, mock_s3
+from moto import mock_aws
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -32,7 +32,7 @@ def mock_env():
 
 @pytest.fixture(scope="function")
 def create_mock_sqs():
-    with mock_sqs():
+    with mock_aws():
         sqs = boto3.resource("sqs", region_name="us-east-1")
         queue = sqs.create_queue(QueueName="test", Attributes={"DelaySeconds": "0"})
         queue.send_message(MessageBody=json.dumps(fake_message1))
@@ -42,7 +42,7 @@ def create_mock_sqs():
 
 @pytest.fixture(scope="function")
 def s3(mock_env):
-    with mock_s3():
+    with mock_aws():
         conn = boto3.resource("s3", region_name="us-east-1")
         conn.create_bucket(Bucket="test_bucket")
         s3_client = boto3.client("s3")

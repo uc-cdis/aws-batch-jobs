@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "aws-batch-jobs"
+version = "1.0.0"
+description = "Gen3 AWS Batch"
+authors = ["CTDS UChicago <cdis@uchicago.edu>"]
+license = "Apache-2.0"
+readme = "README.md"
+
+packages = [
+  { include = "batch_jobs" }
+]
+
+[tool.poetry.dependencies]
+python = ">=3.9.2,<4.0.0"
+boto3 = ">=1.40.2,<2.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^6.2.4"
+moto = ">=5.1.17,<6.0.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

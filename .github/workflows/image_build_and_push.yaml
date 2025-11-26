@@ -1,0 +1,74 @@
+name: Build Jenkins images
+
+on:
+  push:
+    paths:
+      - .github/workflows/image_build_and_push.yaml
+      - batch_jobs/**
+
+jobs:
+  bucket-manifest:
+    name: bucket-manifest
+    uses: uc-cdis/.github/.github/workflows/image_build_push.yaml@master
+    with:
+      DOCKERFILE_LOCATION: "./batch_jobs/bucket_manifest/bucket_manifest.Dockerfile"
+      OVERRIDE_REPO_NAME: "bucket-manifest"
+      USE_QUAY_ONLY: true
+      BUILD_PLATFORMS: "linux/amd64"
+    secrets:
+      ECR_AWS_ACCESS_KEY_ID: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
+      ECR_AWS_SECRET_ACCESS_KEY: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
+      QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+      QUAY_ROBOT_TOKEN: ${{ secrets.QUAY_ROBOT_TOKEN }}
+  bucket-replicate:
+    name: bucket-replicate
+    uses: uc-cdis/.github/.github/workflows/image_build_push.yaml@master
+    with:
+      DOCKERFILE_LOCATION: "./batch_jobs/bucket_replicate/bucket_replicate.Dockerfile"
+      OVERRIDE_REPO_NAME: "bucket-replicate"
+      USE_QUAY_ONLY: true
+      BUILD_PLATFORMS: "linux/amd64"
+    secrets:
+      ECR_AWS_ACCESS_KEY_ID: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
+      ECR_AWS_SECRET_ACCESS_KEY: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
+      QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+      QUAY_ROBOT_TOKEN: ${{ secrets.QUAY_ROBOT_TOKEN }}
+  gdc-copy:
+    name: gdc_copy
+    uses: uc-cdis/.github/.github/workflows/image_build_push.yaml@master
+    with:
+      DOCKERFILE_LOCATION: "./batch_jobs/dcf_replication/gdc_copy.Dockerfile"
+      OVERRIDE_REPO_NAME: "gdc_copy"
+      USE_QUAY_ONLY: true
+      BUILD_PLATFORMS: "linux/amd64"
+    secrets:
+      ECR_AWS_ACCESS_KEY_ID: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
+      ECR_AWS_SECRET_ACCESS_KEY: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
+      QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+      QUAY_ROBOT_TOKEN: ${{ secrets.QUAY_ROBOT_TOKEN }}
+  object-manifest:
+    name: object_metadata
+    uses: uc-cdis/.github/.github/workflows/image_build_push.yaml@master
+    with:
+      DOCKERFILE_LOCATION: "./batch_jobs/bucket_manifest/object_metadata.Dockerfile"
+      OVERRIDE_REPO_NAME: "object_metadata"
+      USE_QUAY_ONLY: true
+      BUILD_PLATFORMS: "linux/amd64"
+    secrets:
+      ECR_AWS_ACCESS_KEY_ID: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
+      ECR_AWS_SECRET_ACCESS_KEY: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
+      QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+      QUAY_ROBOT_TOKEN: ${{ secrets.QUAY_ROBOT_TOKEN }}
+  object-copy:
+    name: object_copy
+    uses: uc-cdis/.github/.github/workflows/image_build_push.yaml@master
+    with:
+      DOCKERFILE_LOCATION: "./batch_jobs/bucket_replicate/object_copy.Dockerfile"
+      OVERRIDE_REPO_NAME: "object_copy"
+      USE_QUAY_ONLY: true
+      BUILD_PLATFORMS: "linux/amd64"
+    secrets:
+      ECR_AWS_ACCESS_KEY_ID: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
+      ECR_AWS_SECRET_ACCESS_KEY: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
+      QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+      QUAY_ROBOT_TOKEN: ${{ secrets.QUAY_ROBOT_TOKEN }}

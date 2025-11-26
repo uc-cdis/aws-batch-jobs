@@ -15,8 +15,6 @@ from urllib.parse import urlparse
 import boto3
 from botocore.exceptions import ClientError
 
-from ..utils import utils
-
 logging.basicConfig(level=logging.INFO)
 # logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
@@ -88,7 +86,7 @@ def submit_job(source_bucket, destination_bucket, job_queue, job_definition, key
             else:
                 logging.info("TooManyRequestsException. Sleep and retry...")
 
-        time.sleep(2 ** n_tries)
+        time.sleep(2**n_tries)
     return False
 
 
