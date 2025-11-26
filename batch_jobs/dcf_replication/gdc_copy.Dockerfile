@@ -12,10 +12,15 @@ RUN poetry install --no-dev --no-interaction --no-ansi
 
 USER root
 
-RUN curl -fsSL https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.deb \
-      -o /tmp/mount-s3.deb && \
-    apt-get install /tmp/mount-s3.deb -y && \
-    rm -f /tmp/mount-s3.deb
+RUN yum update -y && \
+    yum install -y \
+        fuse \
+        && \
+    curl -fsSL https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm \
+        -o /tmp/mount-s3.rpm && \
+    yum install -y /tmp/mount-s3.rpm && \
+    rm -f /tmp/mount-s3.rpm && \
+    yum clean all
 
 RUN mkdir -p mnt
 
