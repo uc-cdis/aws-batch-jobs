@@ -45,6 +45,10 @@ USER gen3
 
 COPY --chown=gen3:gen3 --from=builder /$appname /$appname
 
+# Verify installation
+RUN python3 -c "import boto3; print(f'boto3 version: {boto3.__version__}')" && \
+    aws --version
+
 WORKDIR /${appname}
 
 ENTRYPOINT ["/bin/bash"]
