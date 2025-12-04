@@ -7,10 +7,12 @@ COPY . /dcf_replication
 WORKDIR /dcf_replication
 
 RUN pip3 install awscli
-RUN poetry config virtualenvs.create false
-RUN poetry install --no-dev --no-interaction --no-ansi
 
 USER root
+
+RUN poetry config virtualenvs.create false
+
+RUN poetry install --only main --no-interaction --no-ansi
 
 RUN yum update -y && \
     yum install -y \
