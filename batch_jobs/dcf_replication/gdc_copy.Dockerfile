@@ -2,13 +2,28 @@ ARG AZLINUX_BASE_VERSION=master
 
 FROM quay.io/cdis/python-nginx-al:${AZLINUX_BASE_VERSION} AS base
 
-COPY . /dcf_replication
+ENV appname=dcf_replication
 
-WORKDIR /dcf_replication
+WORKDIR /${appname}
 
-RUN pip3 install awscli
-RUN poetry config virtualenvs.create false
-RUN poetry install --no-dev --no-interaction --no-ansi
+FROM base AS builder
+
+USER root
+
+# copy ONLY poetry artifact, install the dependencies but not the app;
+# this will make sure that the dependencies are cached
+COPY poetry.lock pyproject.toml /${appname}/
+
+# install the app dependencies (including awscli and boto3)
+RUN poetry install -vv --no-root --without dev --no-interaction && \
+    poetry show -v
+
+# Now copy the rest of the application
+COPY . /${appname}
+
+FROM base
+
+ENV PATH="/${appname}/.venv/bin:$PATH"
 
 USER root
 
@@ -23,6 +38,10 @@ RUN yum update -y && \
     yum clean all
 
 RUN mkdir -p mnt
+
+COPY --from=builder /$appname /$appname
+
+WORKDIR /${appname}
 
 ENTRYPOINT ["/bin/bash"]
 CMD [ "/dcf_replication/batch_jobs/dcf_replication/gdc_copy_job.sh" ]
