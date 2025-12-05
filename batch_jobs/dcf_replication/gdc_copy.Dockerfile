@@ -6,12 +6,9 @@ ENV appname=dcf_replication
 
 WORKDIR /${appname}
 
-RUN chown -R gen3:gen3 /${appname}
-
 FROM base AS builder
 
 USER root
-
 
 # copy ONLY poetry artifact, install the dependencies but not the app;
 # this will make sure that the dependencies are cached
@@ -22,7 +19,7 @@ RUN poetry install -vv --no-root --without dev --no-interaction && \
     poetry show -v
 
 # Now copy the rest of the application
-COPY --chown=gen3:gen3 . /${appname}
+COPY . /${appname}
 
 FROM base
 
@@ -42,13 +39,7 @@ RUN yum update -y && \
 
 RUN mkdir -p mnt
 
-USER root
-
-COPY --chown=gen3:gen3 --from=builder /$appname /$appname
-
-# Verify installation
-RUN python3 -c "import boto3; print(f'boto3 version: {boto3.__version__}')" && \
-    aws --version
+COPY --from=builder /$appname /$appname
 
 WORKDIR /${appname}
 
