@@ -12,12 +12,12 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.9.2,<4.0.0"
-boto3 = "1.11.11"
-awscli = "^1.0.0"
+boto3 = "^1.42.3"
+awscli = "^1.43.9"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^6.2.4"
-moto = "1.3.14"
+moto = "^5.1.18"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
