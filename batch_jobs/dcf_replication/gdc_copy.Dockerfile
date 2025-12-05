@@ -10,7 +10,8 @@ RUN chown -R gen3:gen3 /${appname}
 
 FROM base AS builder
 
-USER gen3
+USER root
+
 
 # copy ONLY poetry artifact, install the dependencies but not the app;
 # this will make sure that the dependencies are cached
@@ -41,7 +42,7 @@ RUN yum update -y && \
 
 RUN mkdir -p mnt
 
-USER gen3
+USER root
 
 COPY --chown=gen3:gen3 --from=builder /$appname /$appname
 
