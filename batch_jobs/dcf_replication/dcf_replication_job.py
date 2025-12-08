@@ -130,7 +130,7 @@ def submit_job(job_queue, job_definition, file):
                     "ERROR: Access denied to {}. Detail {}".format(job_queue, e)
                 )
                 sys.exit(1)
-            if e.response["Error"]["Code"] != "TooManyRequestsException":
+            if e.response["Error"]["Code"] == "TooManyRequestsException":
                 logging.info("TooManyRequestsException. Sleep and retry...")
             else:
                 n_tries += 1
