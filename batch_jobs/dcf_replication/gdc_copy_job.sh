@@ -1,9 +1,10 @@
 #!/bin/bash
 set -uxo pipefail
 
-aws configure set aws_access_key_id "$ACCESS_KEY_ID"
-aws configure set aws_secret_access_key "$SECRET_ACCESS_KEY"
-echo "aws credentials configured."
+# Commenting out since aws creds would come from IAM role
+# aws configure set aws_access_key_id "$ACCESS_KEY_ID"
+# aws configure set aws_secret_access_key "$SECRET_ACCESS_KEY"
+# echo "aws credentials configured."
 
 if [[ "$DESTINATION_BUCKET" == s3://* ]]; then
   S3_PREFIX="${DESTINATION_BUCKET%/}"
