@@ -29,6 +29,9 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
         aws_cp_cmd+=(--expected-size "$SIZE")
     fi
 
+    if [ -n "${PROFILE_NAME:-}" ]; then
+        aws_cp_cmd+=(--profile "$PROFILE_NAME")
+
     if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
              --header "X-Auth-Token: $GDC_TOKEN" \
         | tee >(md5sum | awk '{print $1}' > "$MD5_FILE") \

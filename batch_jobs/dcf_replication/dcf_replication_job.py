@@ -26,6 +26,7 @@ JOB_STATUS_KEY = "job_status"
 REGION = os.environ.get("REGION", "us-east-1")
 NUMBER_OF_THREADS = 5
 MAX_RETRIES = 3
+OPEN_ACCOUNT_PROFILE = "data-refresh-open"
 
 
 def run_job(
@@ -72,7 +73,11 @@ def run_job(
 def submit_job(job_queue, job_definition, file):
     key = file["id"] + "/" + file["file_name"]
     session = boto3.Session()
-    s3 = session.client("s3")
+
+    profile_name = (
+        OPEN_ACCOUNT_PROFILE if "-2-" in file["destination_bucket"] else "default"
+    )
+    s3 = session.client("s3", profile_name=profile_name)
 
     # Pre-check if bucket exists
     if not check_bucket_exists(s3, file["destination_bucket"]):
@@ -118,6 +123,7 @@ def submit_job(job_queue, job_definition, file):
                         },
                         {"value": key, "name": "KEY"},
                         {"value": GDC_TOKEN, "name": "GDC_TOKEN"},
+                        {"value": profile_name, "name": "PROFILE_NAME"},
                     ]
                 },
             )
@@ -377,7 +383,7 @@ def write_output_manifest_to_s3_file(data, bucket_name, file_prefix):
         time_str = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
         key = f"{file_prefix}_{time_str}.tsv"
         session = boto3.Session()
-        s3 = session.client("s3")
+        s3 = session.client("s3", profile_name="default")
         # Use the s3 client that was passed to the function
         if check_bucket_exists(s3, bucket_name):
             # Create an in-memory text buffer
