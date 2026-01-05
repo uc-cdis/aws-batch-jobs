@@ -26,7 +26,7 @@ JOB_STATUS_KEY = "job_status"
 REGION = os.environ.get("REGION", "us-east-1")
 NUMBER_OF_THREADS = 5
 MAX_RETRIES = 3
-OPEN_ACCOUNT_PROFILE = "data-refresh-open"
+OPEN_ACCOUNT_PROFILE = "fence-bot"
 
 
 def run_job(
@@ -73,7 +73,7 @@ def run_job(
 def submit_job(job_queue, job_definition, file):
     key = file["id"] + "/" + file["file_name"]
     profile_name = (
-        OPEN_ACCOUNT_PROFILE if "-2-" in file["destination_bucket"] else "default"
+        OPEN_ACCOUNT_PROFILE if "-2-" in file["destination_bucket"] else "fence-bot"
     )
     session = boto3.Session(profile_name=profile_name)
 
@@ -382,7 +382,7 @@ def write_output_manifest_to_s3_file(data, bucket_name, file_prefix):
     try:
         time_str = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
         key = f"{file_prefix}_{time_str}.tsv"
-        session = boto3.Session(profile_name="default")
+        session = boto3.Session(profile_name="fence-bot")
         s3 = session.client("s3")
         # Use the s3 client that was passed to the function
         if check_bucket_exists(s3, bucket_name):
