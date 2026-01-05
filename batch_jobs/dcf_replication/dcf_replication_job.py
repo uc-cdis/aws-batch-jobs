@@ -72,12 +72,12 @@ def run_job(
 
 def submit_job(job_queue, job_definition, file):
     key = file["id"] + "/" + file["file_name"]
-    session = boto3.Session()
-
     profile_name = (
         OPEN_ACCOUNT_PROFILE if "-2-" in file["destination_bucket"] else "default"
     )
-    s3 = session.client("s3", profile_name=profile_name)
+    session = boto3.Session(profile_name=profile_name)
+
+    s3 = session.client("s3")
 
     # Pre-check if bucket exists
     if not check_bucket_exists(s3, file["destination_bucket"]):
@@ -382,8 +382,8 @@ def write_output_manifest_to_s3_file(data, bucket_name, file_prefix):
     try:
         time_str = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
         key = f"{file_prefix}_{time_str}.tsv"
-        session = boto3.Session()
-        s3 = session.client("s3", profile_name="default")
+        session = boto3.Session(profile_name="default")
+        s3 = session.client("s3")
         # Use the s3 client that was passed to the function
         if check_bucket_exists(s3, bucket_name):
             # Create an in-memory text buffer
