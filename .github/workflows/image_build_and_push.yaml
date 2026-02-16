@@ -35,7 +35,7 @@ jobs:
       QUAY_ROBOT_TOKEN: ${{ secrets.QUAY_ROBOT_TOKEN }}
   gdc-copy:
     name: gdc_copy
-    uses: uc-cdis/.github/.github/workflows/image_build_push.yaml@master
+    uses: uc-cdis/.github/.github/workflows/image_build_push.yaml@feat_add-indexing-to-workers
     with:
       DOCKERFILE_LOCATION: "./batch_jobs/dcf_replication/gdc_copy.Dockerfile"
       OVERRIDE_REPO_NAME: "gdc_copy"
