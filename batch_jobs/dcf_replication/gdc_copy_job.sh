@@ -258,6 +258,7 @@ if [ "$success" = false ]; then
     exit 1
 fi
 
+echo "Checking indexd for record"
 check_and_index $ID
 
 echo "SUCCESS: File verified and transferred"
