@@ -48,7 +48,7 @@ putRecord () {
 
     echo "Updating indexd record..."
     curl --request PUT \
-      --url "$HOSTNAME/$did?rev=$rev" \
+      --url "$HOSTNAME/index/$did?rev=$rev" \
       --header 'content-type: application/json' \
       --user $USERNAME:$PASSWORD \
       --max-time 10 \
@@ -113,7 +113,7 @@ postRecord () {
 
     echo "$json_payload" | jq .
     curl --request POST \
-      --url $HOSTNAME/ \
+      --url "$HOSTNAME/index/" \
       --user $USERNAME:$PASSWORD \
       --max-time 10 \
       --retry 5 \
@@ -139,9 +139,8 @@ check_and_index () {
         --retry 5 \
         --retry-delay 10 \
         --retry-max-time 40 \
-        --silent \
         --write-out "\n%{http_code}" \
-        --url "$HOSTNAME/$did")
+        --url "$HOSTNAME/index/$did")
 
     # Extract status code (last line) and body (everything except last line)
     status_code=$(echo "$response" | tail -n 1)
