@@ -28,25 +28,6 @@ REGION = os.environ.get("REGION", "us-east-1")
 NUMBER_OF_THREADS = 5
 MAX_RETRIES = 3
 
-USERNAME = ""
-PASSWORD = ""
-if INDEXD:
-    if INDEXD.get("host"):
-        HOSTNAME = INDEXD.get("host")
-    else:
-        logging.error(
-            f"INDEXD HOST not set in DCF Dataservice Settings file. INDEXD Settings contains: {INDEXD}"
-        )
-    if INDEXD.get("auth").get("username") or INDEXD.get("auth").get("password"):
-        USERNAME = INDEXD.get("auth").get("username")
-        PASSWORD = INDEXD.get("auth").get("password")
-    else:
-        logging.error(
-            f"INDEXD auth not set in DCF Dataservice Settings file. INDEXD Settings contains: {INDEXD}"
-        )
-else:
-    logging.error("INDEXD Settings not set in DCF Dataservice Settings file")
-
 
 def run_job(
     manifest_file,
@@ -72,6 +53,22 @@ def run_job(
     NUMBER_OF_THREADS = int(thread_count)
     MAX_RETRIES = int(max_retries)
     START_TIME = int(time.time())
+
+    USERNAME = ""
+    PASSWORD = ""
+    if INDEXD:
+        if INDEXD.get("host"):
+            HOSTNAME = INDEXD.get("host")
+        else:
+            logging.error(f"INDEXD HOST not set in DCF Dataservice Settings file.")
+        if INDEXD.get("auth").get("username") or INDEXD.get("auth").get("password"):
+            USERNAME = INDEXD.get("auth").get("username")
+            PASSWORD = INDEXD.get("auth").get("password")
+        else:
+            logging.error(f"INDEXD auth not set in DCF Dataservice Settings file.")
+    else:
+        logging.error("INDEXD Settings not set in DCF Dataservice Settings file")
+
     logging.info(
         f"Submission Job started at {START_TIME} with {NUMBER_OF_THREADS} threads and {MAX_RETRIES} retries."
     )
