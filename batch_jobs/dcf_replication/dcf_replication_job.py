@@ -54,8 +54,9 @@ def run_job(
     MAX_RETRIES = int(max_retries)
     START_TIME = int(time.time())
 
-    USERNAME = ""
-    PASSWORD = ""
+    global USERNAME
+    global PASSWORD
+    global HOSTNAME
     if INDEXD:
         if INDEXD.get("host"):
             HOSTNAME = INDEXD.get("host")
