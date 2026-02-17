@@ -196,6 +196,7 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
 
     if [ -n "${PROFILE_NAME:-}" ]; then
         aws_cp_cmd+=(--profile "$PROFILE_NAME")
+    fi
 
     if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
              --header "X-Auth-Token: $GDC_TOKEN" \
