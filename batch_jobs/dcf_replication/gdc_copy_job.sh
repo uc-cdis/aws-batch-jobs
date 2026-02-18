@@ -73,7 +73,7 @@ postRecord () {
     aws_url="$5"
     acl+=("$6")
     authz+=("$7")
-    gdc_api=("$8")
+    gdc_api="$8"
 
     new_urls+=("$aws_url")
     new_urls+=("$gdc_api")
@@ -87,10 +87,13 @@ postRecord () {
         file_md5_json=$(jq -n --arg md5 "$file_md5" '{md5: $md5}')
     fi
 
-    # Convert urls arrays to JSON
+    # Convert arrays to JSON
     new_urls_json=$(printf '%s\n' "${new_urls[@]}" | jq -R . | jq -s .)
+    acl=$(printf '%s\n' "${acl[@]}" | jq -R . | jq -s .)
+    authz=$(printf '%s\n' "${authz[@]}" | jq -R . | jq -s .)
 
     # Create final JSON payload
+    size=$((size))
     json_payload=$(jq -n \
         --arg did "$did" \
         --argjson size "$size" \
