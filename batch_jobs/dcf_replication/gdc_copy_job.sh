@@ -55,7 +55,6 @@ putRecord () {
       --retry 5 \
       --retry-delay 10 \
       --retry-max-time 40 \
-      --silent \
       --data "$json_payload"
 }
 
@@ -122,7 +121,6 @@ postRecord () {
       --retry 5 \
       --retry-delay 10 \
       --retry-max-time 40 \
-      --silent \
       --header 'content-type: application/json' \
       --data "$json_payload"
 
@@ -142,7 +140,6 @@ check_and_index () {
         --retry 5 \
         --retry-delay 10 \
         --retry-max-time 40 \
-        --silent \
         --write-out "\n%{http_code}" \
         --url "$HOSTNAME/index/$did")
 
