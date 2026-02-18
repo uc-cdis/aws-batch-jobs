@@ -114,7 +114,7 @@ postRecord () {
     )
 
     echo "$json_payload" | jq .
-    curl --request POST \
+    http_code=$(curl --request POST \
       --url "$HOSTNAME/index/" \
       --user $USERNAME:$PASSWORD \
       --max-time 10 \
@@ -122,7 +122,37 @@ postRecord () {
       --retry-delay 10 \
       --retry-max-time 40 \
       --header 'content-type: application/json' \
-      --data "$json_payload"
+      --data "$json_payload" \
+      --write-out "%{http_code}" \
+      --output "$temp_file" \
+      2>/dev/null)
+    # Check the result
+    if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
+        echo "SUCCESS: HTTP $http_code"
+        echo "Response:"
+        cat "$temp_file" | jq . 2>/dev/null || cat "$temp_file"
+
+        # You can also parse the response if needed
+        if [ -s "$temp_file" ]; then
+            # Example: extract an ID from the response
+            record_id=$(cat "$temp_file" | jq -r '.id // empty' 2>/dev/null)
+            if [ -n "$record_id" ]; then
+                echo "Created record with ID: $record_id"
+            fi
+        fi
+
+        # Return success
+        rm -f "$temp_file"
+        return 0
+    else
+        echo "ERROR: HTTP $http_code"
+        echo "Error response:"
+        cat "$temp_file" 2>/dev/null || echo "No response body"
+
+        # Return failure
+        rm -f "$temp_file"
+        return 1
+    fi
 
 }
 
