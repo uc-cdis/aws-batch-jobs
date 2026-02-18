@@ -133,7 +133,7 @@ def submit_job(job_queue, job_definition, file):
                         {"value": file["file_name"], "name": "FILE_NAME"},
                         {"value": file["size"], "name": "SIZE"},
                         {"value": file["md5"], "name": "MD5SUM"},
-                        {"value": str(acls), "name": "ACLS"},
+                        {"value": str(acls), "name": "ACL"},
                         {"value": str(authz), "name": "AUTHZ"},
                         {
                             "value": file["destination_bucket"],
