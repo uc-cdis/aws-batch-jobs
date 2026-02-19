@@ -113,16 +113,52 @@ postRecord () {
          }'
     )
 
-    echo "$json_payload" | jq .
-    curl --request POST \
+   # Create temp file for response
+    temp_file=$(mktemp)
+
+    echo "DEBUG: Making request to $HOSTNAME/index/"
+
+    # Increase timeouts and add verbose output
+    http_code=$(curl --request POST \
       --url "$HOSTNAME/index/" \
       --user $USERNAME:$PASSWORD \
-      --max-time 10 \
-      --retry 5 \
-      --retry-delay 10 \
-      --retry-max-time 40 \
+      --max-time 30 \           # Increased from 10 to 30 seconds
+      --connect-timeout 15 \     # Add connection timeout
+      --retry 3 \                # Reduced retries for faster failure
+      --retry-delay 2 \
+      --retry-max-time 20 \
       --header 'content-type: application/json' \
-      --data "$json_payload"
+      --data "$json_payload" \
+      --write-out "\n%{http_code}\n" \
+      --output "$temp_file" \
+      --verbose \                 # Add verbose output
+      2>&1)                       # Capture stderr as well
+
+    # Print the verbose output for debugging
+    echo "DEBUG: Curl verbose output:"
+    echo "$http_code" | head -n -2  # Print everything except last line (status code)
+
+    # Get the actual status code (last line)
+    status_code=$(echo "$http_code" | tail -n1)
+
+    echo "DEBUG: HTTP Status code: $status_code"
+
+    # Check response
+    if [ -s "$temp_file" ]; then
+        echo "DEBUG: Response body:"
+        cat "$temp_file" | jq . 2>/dev/null || cat "$temp_file"
+    fi
+
+    # Check if successful
+    if [ "$status_code" -ge 200 ] && [ "$status_code" -lt 300 ]; then
+        echo "SUCCESS: HTTP $status_code"
+        rm -f "$temp_file"
+        return 0
+    else
+        echo "ERROR: HTTP $status_code"
+        rm -f "$temp_file"
+        return 1
+    fi
 
 }
 
