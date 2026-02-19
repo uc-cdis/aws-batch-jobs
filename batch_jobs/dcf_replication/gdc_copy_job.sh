@@ -93,6 +93,15 @@ postRecord () {
 
     # Create final JSON payload
     size=$((size))
+
+    echo $did
+    echo $size
+    echo $file_name
+    echo $file_md5_json
+    echo $acl
+    echo $authz
+    echo $new_urls_json
+
     json_payload=$(jq -n \
         --arg did "$did" \
         --argjson size "$size" \
