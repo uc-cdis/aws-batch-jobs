@@ -124,6 +124,7 @@ postRecord () {
 
    # Create temp file for response
     temp_file=$(mktemp)
+    echo "$json_payload" | jq .
 
     echo "DEBUG: Making request to $HOSTNAME/index/"
 
@@ -131,17 +132,15 @@ postRecord () {
     http_code=$(curl --request POST \
       --url "$HOSTNAME/index/" \
       --user $USERNAME:$PASSWORD \
-      --max-time 30 \           # Increased from 10 to 30 seconds
-      --connect-timeout 15 \     # Add connection timeout
-      --retry 3 \                # Reduced retries for faster failure
+      --max-time 30 \
+      --retry 3 \
       --retry-delay 2 \
       --retry-max-time 20 \
       --header 'content-type: application/json' \
       --data "$json_payload" \
       --write-out "\n%{http_code}\n" \
       --output "$temp_file" \
-      --verbose \                 # Add verbose output
-      2>&1)                       # Capture stderr as well
+      2>&1)
 
     # Print the verbose output for debugging
     echo "DEBUG: Curl verbose output:"
