@@ -230,6 +230,10 @@ check_and_index () {
 
     else
         echo "IndexD record not found. Creating a new record"
+
+        echo $ACL
+        echo $AUTHZ
+
         postRecord $did $FILE_NAME $SIZE $MD5SUM $S3_OBJ "$AUTHZ" "$ACL" "https://api.gdc.cancer.gov/data/$did"
     fi
 }
