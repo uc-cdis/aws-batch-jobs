@@ -84,21 +84,14 @@ postRecord () {
         file_md5_json=$(jq -n --arg md5 "$file_md5" '{md5: $md5}')
     fi
 
-    # Convert arrays to JSON
+    # Convert urls arrays to JSON
     new_urls_json=$(printf '%s\n' "${new_urls[@]}" | jq -R . | jq -s .)
     acl=$(printf '%s\n' "${acl[@]}" | jq -R . | jq -s .)
     authz=$(printf '%s\n' "${authz[@]}" | jq -R . | jq -s .)
 
     # Create final JSON payload
-    size=$((size))
 
-    echo $did
-    echo $size
-    echo $file_name
-    echo $file_md5_json
-    echo $acl
-    echo $authz
-    echo $new_urls_json
+    size=$((size))
 
     json_payload=$(jq -n \
         --arg did "$did" \
@@ -120,11 +113,29 @@ postRecord () {
          }'
     )
 
-   # Create temp file for response
-    temp_file=$(mktemp)
+    # echo "$json_payload" | jq .
+    # curl --request POST \
+    #   --url "$HOSTNAME/index/" \
+    #   --user $USERNAME:$PASSWORD \
+    #   --max-time 10 \
+    #   --retry 5 \
+    #   --retry-delay 10 \
+    #   --retry-max-time 40 \
+    #   --header 'content-type: application/json' \
+    #   --data "$json_payload"
+
+        temp_file=$(mktemp)
     echo "$json_payload" | jq .
 
     echo "DEBUG: Making request to $HOSTNAME/index/"
+
+    echo $did
+    echo $size
+    echo $file_name
+    echo $file_md5_json
+    echo $acl
+    echo $authz
+    echo $new_urls_json
 
     # Increase timeouts and add verbose output
     http_code=$(curl --request POST \
@@ -220,7 +231,6 @@ check_and_index () {
     else
         echo "IndexD record not found. Creating a new record"
         postRecord $did $FILE_NAME $SIZE $MD5SUM $S3_OBJ "$AUTHZ" "$ACL" "https://api.gdc.cancer.gov/data/$did"
-        # Add your POST logic here when ready
     fi
 }
 
