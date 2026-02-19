@@ -118,6 +118,7 @@ def submit_job(job_queue, job_definition, file):
         return file
 
     acls, authz = extract_acl_authz_info(file)
+    acls, authz = convert_acl_authz_for_bash(acls, authz)
 
     client = boto3.client("batch", region_name=REGION)
     n_tries = 0
@@ -166,6 +167,23 @@ def submit_job(job_queue, job_definition, file):
         time.sleep(2**n_tries)
     file[JOB_STATUS_KEY] = "FAILED"
     return file
+
+
+def convert_acl_authz_for_bash(acl, authz):
+    """
+    Converts acl and authz into strings separated by spaces.
+
+    Args:
+        acl (list): acl of object
+        authz (list): authz of object
+    """
+    acl_str = ""
+    authz_str = ""
+    for a in acl:
+        acl_str += f"{a}"
+    for z in authz:
+        authz_str += f"{z}"
+    return acl_str.rstrip(), authz_str.rstrip()
 
 
 def submit_jobs(file_info, job_queue, job_definition, output_manifest_bucket):

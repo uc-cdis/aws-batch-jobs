@@ -60,8 +60,6 @@ putRecord () {
 
 postRecord () {
     # Initialize arrays
-    acl=()
-    authz=()
     new_urls=()
 
     # Assign values
@@ -70,8 +68,8 @@ postRecord () {
     size=$3
     file_md5="$4"
     aws_url="$5"
-    acl+=("$6")
-    authz+=("$7")
+    acl=($6)
+    authz=($7)
     gdc_api="$8"
 
     new_urls+=("$aws_url")
@@ -221,7 +219,7 @@ check_and_index () {
 
     else
         echo "IndexD record not found. Creating a new record"
-        postRecord $did $FILE_NAME $SIZE $MD5SUM $S3_OBJ $AUTHZ $ACL "https://api.gdc.cancer.gov/data/$did"
+        postRecord $did $FILE_NAME $SIZE $MD5SUM $S3_OBJ "$AUTHZ" "$ACL" "https://api.gdc.cancer.gov/data/$did"
         # Add your POST logic here when ready
     fi
 }
