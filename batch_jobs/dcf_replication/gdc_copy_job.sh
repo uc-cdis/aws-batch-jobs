@@ -129,22 +129,14 @@ postRecord () {
 
     echo "DEBUG: Making request to $HOSTNAME/index/"
 
-    echo $did
-    echo $size
-    echo $file_name
-    echo $file_md5_json
-    echo $acl
-    echo $authz
-    echo $new_urls_json
-
     # Increase timeouts and add verbose output
     http_code=$(curl --request POST \
       --url "$HOSTNAME/index/" \
       --user $USERNAME:$PASSWORD \
-      --max-time 30 \
+      --max-time 60 \
       --retry 3 \
-      --retry-delay 2 \
-      --retry-max-time 20 \
+      --retry-delay 10 \
+      --retry-max-time 10 \
       --header 'content-type: application/json' \
       --data "$json_payload" \
       --write-out "\n%{http_code}\n" \
