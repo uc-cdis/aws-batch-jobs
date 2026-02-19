@@ -68,8 +68,8 @@ postRecord () {
     size=$3
     file_md5="$4"
     aws_url="$5"
-    acl=($6)
-    authz=($7)
+    authz=($6)
+    acl=($7)
     gdc_api="$8"
 
     new_urls+=("$aws_url")
