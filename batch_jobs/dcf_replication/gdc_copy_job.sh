@@ -124,8 +124,8 @@ postRecord () {
     #   --header 'content-type: application/json' \
     #   --data "$json_payload"
 
-        temp_file=$(mktemp)
-    echo "$json_payload" | jq .
+    temp_file=$(mktemp)
+    # echo "$json_payload" | jq .
 
     echo "DEBUG: Making request to $HOSTNAME/index/"
 
