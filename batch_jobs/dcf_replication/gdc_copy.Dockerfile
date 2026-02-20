@@ -30,6 +30,7 @@ USER root
 RUN yum update -y && \
     yum install -y \
         fuse \
+        jq \
         && \
     curl -fsSL https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm \
         -o /tmp/mount-s3.rpm && \
