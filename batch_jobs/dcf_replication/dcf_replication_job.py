@@ -58,7 +58,7 @@ def run_job(
     local_manifest = get_manifest_from_bucket(manifest_file)
     parsed_data = parse_manifest_file(local_manifest)
     submitted, skipped, failed = submit_jobs(
-        parsed_data, job_queue, job_definition, output_manifest_bucket
+        parsed_data[0], job_queue, job_definition, output_manifest_bucket
     )
 
     logging.info(f"Job submission summary:")
@@ -94,10 +94,10 @@ def submit_job(job_queue, job_definition, file):
         file["md5"],
     )
 
-    if exists:
-        logging.info(f"Skipping {key}: {message}")
-        file[JOB_STATUS_KEY] = "SKIPPED"
-        return file
+    # if exists:
+    #     logging.info(f"Skipping {key}: {message}")
+    #     file[JOB_STATUS_KEY] = "SKIPPED"
+    #     return file
 
     client = boto3.client("batch", region_name=REGION)
     n_tries = 0
