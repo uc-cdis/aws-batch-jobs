@@ -33,16 +33,32 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
         aws_cp_cmd+=(--profile "$PROFILE_NAME")
 
     if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
-             --header "X-Auth-Token: $GDC_TOKEN" \
-        | tee >(md5sum | awk '{print $1}' > "$MD5_FILE") \
-        | tee >(wc -c    | awk '{print $1}' > "$SIZE_FILE") \
+        --header "X-Auth-Token: $GDC_TOKEN" \
+        | python3 -c "
+    import sys, hashlib
+
+    h = hashlib.md5()
+    n = 0
+    buf_size = 8 * 1024 * 1024  # 8MB chunks
+
+    while True:
+        chunk = sys.stdin.buffer.read(buf_size)
+        if not chunk:
+            break
+        h.update(chunk)
+        n += len(chunk)
+        sys.stdout.buffer.write(chunk)
+        sys.stdout.buffer.flush()
+
+    sys.stderr.write(h.hexdigest() + '\n')
+    sys.stderr.write(str(n) + '\n')
+    " 2>"$MD5_FILE.tmp" \
         | "${aws_cp_cmd[@]}"; then
 
 
-        downloaded_size="$(cat "$SIZE_FILE")"
-        downloaded_md5="$(cat "$MD5_FILE")"
-
-        rm -f "$MD5_FILE" "$SIZE_FILE"
+        downloaded_md5=$(sed -n '1p' "$MD5_FILE.tmp")
+        downloaded_size=$(sed -n '2p' "$MD5_FILE.tmp")
+        rm -f "$MD5_FILE.tmp"
 
         size_ok=true
         md5_ok=true
