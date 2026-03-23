@@ -60,7 +60,7 @@ if __name__ == "__main__":
             args.job_queue,
             args.job_definition,
             args.output_manifest_bucket,
+            args.curl_location,
             args.thread_count,
             args.max_retries,
-            args.curl_location,
         )
