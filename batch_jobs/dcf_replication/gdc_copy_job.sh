@@ -3,7 +3,7 @@ set -uxo pipefail
 
 aws configure set aws_access_key_id "$ACCESS_KEY_ID"
 aws configure set aws_secret_access_key "$SECRET_ACCESS_KEY"
-aws configure set default.s3.multipart_chunksize 128MB
+aws configure set default.s3.multipart_chunksize 64MB
 echo "aws credentials configured."
 
 if [[ "$DESTINATION_BUCKET" == s3://* ]]; then
