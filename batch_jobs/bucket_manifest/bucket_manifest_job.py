@@ -20,6 +20,7 @@ from ..utils import utils
 logging.basicConfig(level=logging.INFO)
 # logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
+
 NUMBER_OF_THREADS = 16
 MAX_RETRIES = 10
 
@@ -94,7 +95,7 @@ def submit_job(job_queue, job_definition, key):
             else:
                 logging.info("TooManyRequestsException. Sleep and retry...")
 
-        time.sleep(2 ** n_tries)
+        time.sleep(2**n_tries)
     return False
 
 
