@@ -38,10 +38,10 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
         aws_cp_cmd+=(--profile "$PROFILE_NAME")
     fi
 
-    #TODO: Remove this. This one is just for testing purposes.
-    if curl --fail --location "$CURL_LOCATION" \
     # if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
     #     --header "X-Auth-Token: $GDC_TOKEN" \
+    #TODO: Remove this. This one is just for testing purposes.
+    if curl --fail --location "$CURL_LOCATION" \
         | python3 -c "
 import sys, hashlib
 h = hashlib.md5()
