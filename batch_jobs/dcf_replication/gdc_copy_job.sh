@@ -1,15 +1,14 @@
 #!/bin/bash
 set -uxo pipefail
 
-# Comment this out when we move to using just aws creds account
 aws configure set aws_access_key_id "$ACCESS_KEY_ID"
 aws configure set aws_secret_access_key "$SECRET_ACCESS_KEY"
 echo "aws credentials configured."
 
 if [[ "$DESTINATION_BUCKET" == s3://* ]]; then
-  S3_PREFIX="${DESTINATION_BUCKET%/}"
+    S3_PREFIX="${DESTINATION_BUCKET%/}"
 else
-  S3_PREFIX="s3://$DESTINATION_BUCKET"
+    S3_PREFIX="s3://$DESTINATION_BUCKET"
 fi
 
 S3_OBJ="$S3_PREFIX/$KEY"
@@ -28,50 +27,42 @@ DESTINATION_BUCKET="log-bucket-june2"
 KEY="final_destination.dat"
 S3_OBJ="s3://test-gdc-abc-phs000222-2-open/final_file99.dat"
 
-
 while [ "$attempt" -le "$MAX_RETRIES" ]; do
-
-    MD5_FILE="$(mktemp /tmp/md5.XXXXXX)"
-    SIZE_FILE="$(mktemp /tmp/size.XXXXXX)"
+    HASH_FILE="$(mktemp /tmp/hashout.XXXXXX)"
 
     aws_cp_cmd=(aws s3 cp - "$S3_OBJ")
     if [ -n "${SIZE:-}" ]; then
         aws_cp_cmd+=(--expected-size "$SIZE")
     fi
-
     if [ -n "${PROFILE_NAME:-}" ]; then
         aws_cp_cmd+=(--profile "$PROFILE_NAME")
+    fi
 
-
-#TODO: Remove this. This one is just for testing purposes.
+    #TODO: Remove this. This one is just for testing purposes.
     if curl --fail --location "$CURL_LOCATION" \
     # if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
     #     --header "X-Auth-Token: $GDC_TOKEN" \
         | python3 -c "
-    import sys, hashlib
-
-    h = hashlib.md5()
-    n = 0
-    buf_size = 100 * 1024 * 1024  # 100MB chunks
-
-    while True:
-        chunk = sys.stdin.buffer.read(buf_size)
-        if not chunk:
-            break
-        h.update(chunk)
-        n += len(chunk)
-        sys.stdout.buffer.write(chunk)
-        sys.stdout.buffer.flush()
-
-    sys.stderr.write(h.hexdigest() + '\n')
-    sys.stderr.write(str(n) + '\n')
-    " 2>"$MD5_FILE.tmp" \
+import sys, hashlib
+h = hashlib.md5()
+n = 0
+buf_size = 100 * 1024 * 1024
+while True:
+    chunk = sys.stdin.buffer.read(buf_size)
+    if not chunk:
+        break
+    h.update(chunk)
+    n += len(chunk)
+    sys.stdout.buffer.write(chunk)
+    sys.stdout.buffer.flush()
+sys.stderr.write(h.hexdigest() + '\n')
+sys.stderr.write(str(n) + '\n')
+" 2>"$HASH_FILE" \
         | "${aws_cp_cmd[@]}"; then
 
-
-        downloaded_md5=$(sed -n '1p' "$MD5_FILE.tmp")
-        downloaded_size=$(sed -n '2p' "$MD5_FILE.tmp")
-        rm -f "$MD5_FILE.tmp"
+        downloaded_md5=$(sed -n '1p' "$HASH_FILE")
+        downloaded_size=$(sed -n '2p' "$HASH_FILE")
+        rm -f "$HASH_FILE"
 
         size_ok=true
         md5_ok=true
@@ -109,7 +100,7 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
 
     else
         echo "curl/pipe/aws s3 cp pipeline failed"
-        rm -f "$MD5_FILE" "$SIZE_FILE" || true
+        rm -f "$HASH_FILE" || true
     fi
 
     echo "Attempt $attempt failed, sleeping $RETRY_DELAY seconds then retrying..."
