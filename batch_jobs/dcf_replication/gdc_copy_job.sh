@@ -29,7 +29,8 @@ S3_OBJ="s3://test-gdc-abc-phs000222-2-open/final_file99.dat"
 
 while [ "$attempt" -le "$MAX_RETRIES" ]; do
     HASH_FILE="$(mktemp /tmp/hashout.XXXXXX)"
-
+    echo "DEBUG: HASH_FILE=$HASH_FILE"
+    ls -la "$HASH_FILE"
     aws_cp_cmd=(aws s3 cp - "$S3_OBJ")
     if [ -n "${SIZE:-}" ]; then
         aws_cp_cmd+=(--expected-size "$SIZE")
@@ -62,7 +63,7 @@ sys.stderr.write(str(n) + '\n')
 
         downloaded_md5=$(sed -n '1p' "$HASH_FILE")
         downloaded_size=$(sed -n '2p' "$HASH_FILE")
-        rm -f "$HASH_FILE"
+        # rm -f "$HASH_FILE"
 
         size_ok=true
         md5_ok=true
@@ -100,7 +101,7 @@ sys.stderr.write(str(n) + '\n')
 
     else
         echo "curl/pipe/aws s3 cp pipeline failed"
-        rm -f "$HASH_FILE" || true
+        # rm -f "$HASH_FILE" || true
     fi
 
     echo "Attempt $attempt failed, sleeping $RETRY_DELAY seconds then retrying..."
