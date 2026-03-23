@@ -3,6 +3,7 @@ set -uxo pipefail
 
 aws configure set aws_access_key_id "$ACCESS_KEY_ID"
 aws configure set aws_secret_access_key "$SECRET_ACCESS_KEY"
+aws configure set default.s3.multipart_chunksize 512MB
 echo "aws credentials configured."
 
 if [[ "$DESTINATION_BUCKET" == s3://* ]]; then
@@ -41,7 +42,6 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
         aws_cp_cmd+=(--profile "$PROFILE_NAME")
     fi
 
-    aws_cp_cmd+=(--part-size 512)
     echo "DEBUG: aws_cp_cmd = ${aws_cp_cmd[@]}"
     # if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
     #     --header "X-Auth-Token: $GDC_TOKEN" \
