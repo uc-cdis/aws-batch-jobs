@@ -19,6 +19,16 @@ RETRY_DELAY=10
 attempt=1
 success=false
 
+#TODO: Remove this. This one is just for testing purposes.
+ID="51508da5-018b-4393-808a-88a92b843667"
+FILE_NAME="largefile_3.dat"
+SIZE="536870912000"
+MD5SUM="9887d53e52060668fd266480a2f3ad73" #pragma: allowlist secret
+DESTINATION_BUCKET="log-bucket-june2"
+KEY="final_destination.dat"
+S3_OBJ="s3://test-gdc-abc-phs000222-2-open/final_file99.dat"
+
+
 while [ "$attempt" -le "$MAX_RETRIES" ]; do
 
     MD5_FILE="$(mktemp /tmp/md5.XXXXXX)"
@@ -32,14 +42,17 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
     if [ -n "${PROFILE_NAME:-}" ]; then
         aws_cp_cmd+=(--profile "$PROFILE_NAME")
 
-    if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
-        --header "X-Auth-Token: $GDC_TOKEN" \
+
+#TODO: Remove this. This one is just for testing purposes.
+    if curl --fail --location "$CURL_LOCATION" \
+    # if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
+    #     --header "X-Auth-Token: $GDC_TOKEN" \
         | python3 -c "
     import sys, hashlib
 
     h = hashlib.md5()
     n = 0
-    buf_size = 8 * 1024 * 1024  # 8MB chunks
+    buf_size = 100 * 1024 * 1024  # 100MB chunks
 
     while True:
         chunk = sys.stdin.buffer.read(buf_size)

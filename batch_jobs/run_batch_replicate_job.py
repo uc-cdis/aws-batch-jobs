@@ -22,6 +22,10 @@ def parse_arguments():
     bucket_manifest_cmd.add_argument(
         "--destination_bucket", required=True, help="Destination Bucket Name"
     )
+    # TODO: Remove this. This one is just for testing purposes.
+    bucket_manifest_cmd.add_argument(
+        "--curl_location", required=True, help="S3 presigned url to test"
+    )
     return parser.parse_args()
 
 
@@ -33,4 +37,5 @@ if __name__ == "__main__":
             args.job_queue,
             args.job_definition,
             args.destination_bucket,
+            args.curl_location,
         )

@@ -33,6 +33,7 @@ def run_job(
     job_queue,
     job_definition,
     output_manifest_bucket,
+    curl_location,
     thread_count=NUMBER_OF_THREADS,
     max_retries=MAX_RETRIES,
 ):
@@ -59,7 +60,11 @@ def run_job(
     parsed_data = parse_manifest_file(local_manifest)
     parsed_data = parsed_data[:1]
     submitted, skipped, failed = submit_jobs(
-        parsed_data, job_queue, job_definition, output_manifest_bucket
+        parsed_data,
+        job_queue,
+        job_definition,
+        output_manifest_bucket,
+        curl_location,
     )
 
     logging.info(f"Job submission summary:")
@@ -121,6 +126,7 @@ def submit_job(job_queue, job_definition, file):
                         {"value": key, "name": "KEY"},
                         {"value": GDC_TOKEN, "name": "GDC_TOKEN"},
                         {"value": "default", "name": "PROFILE_NAME"},
+                        {"value": file["curl_location"], "name": "CURL_LOCATION"},
                     ]
                 },
             )
@@ -144,7 +150,9 @@ def submit_job(job_queue, job_definition, file):
     return file
 
 
-def submit_jobs(file_info, job_queue, job_definition, output_manifest_bucket):
+def submit_jobs(
+    file_info, job_queue, job_definition, output_manifest_bucket, curl_location
+):
     """
     Submit jobs to the queue
 
@@ -167,6 +175,7 @@ def submit_jobs(file_info, job_queue, job_definition, output_manifest_bucket):
     failed_output_manifest = []
 
     with Pool(NUMBER_OF_THREADS) as pool:
+        file_info["curl_location"] = curl_location
         results = pool.map(par_submit_job, file_info)
 
     for result in results:
