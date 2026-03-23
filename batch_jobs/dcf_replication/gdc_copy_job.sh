@@ -106,6 +106,7 @@ sys.stderr.write(str(n) + '\n')
     echo "Attempt $attempt failed, sleeping $RETRY_DELAY seconds then retrying..."
     sleep "$RETRY_DELAY"
     attempt=$((attempt + 1))
+    cat "$HASH_FILE"
 done
 
 if [ "$success" = false ]; then
