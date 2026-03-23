@@ -51,7 +51,7 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
 import sys, hashlib
 h = hashlib.md5()
 n = 0
-buf_size = 10 * 1024 * 1024
+buf_size = 5 * 1024 * 1024
 while True:
     chunk = sys.stdin.buffer.read(buf_size)
     if not chunk:
