@@ -45,6 +45,10 @@ def parse_arguments():
         required=True,
         help="The name of the bucket for output manifest",
     )
+    # TODO: Remove this. This one is just for testing purposes.
+    dcf_replication_cmd.add_argument(
+        "--curl_location", required=True, help="S3 presigned url to test"
+    )
     return parser.parse_args()
 
 
@@ -58,4 +62,5 @@ if __name__ == "__main__":
             args.output_manifest_bucket,
             args.thread_count,
             args.max_retries,
+            args.curl_location,
         )
