@@ -18,6 +18,8 @@ RETRY_DELAY=10
 attempt=1
 success=false
 
+AWS_ERR_FILE="$(mktemp /tmp/awserr.XXXXXX)"
+
 #TODO: Remove this. This one is just for testing purposes.
 ID="51508da5-018b-4393-808a-88a92b843667"
 FILE_NAME="largefile_3.dat"
@@ -39,6 +41,8 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
         aws_cp_cmd+=(--profile "$PROFILE_NAME")
     fi
 
+    aws_cp_cmd+=(--part-size 512)
+    echo "DEBUG: aws_cp_cmd = ${aws_cp_cmd[@]}"
     # if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
     #     --header "X-Auth-Token: $GDC_TOKEN" \
     #TODO: Remove this. This one is just for testing purposes.
@@ -59,7 +63,7 @@ while True:
 sys.stderr.write(h.hexdigest() + '\n')
 sys.stderr.write(str(n) + '\n')
 " 2>"$HASH_FILE" \
-        | "${aws_cp_cmd[@]}"; then
+        | "${aws_cp_cmd[@]}" 2>"$AWS_ERR_FILE"; then
 
         downloaded_md5=$(sed -n '1p' "$HASH_FILE")
         downloaded_size=$(sed -n '2p' "$HASH_FILE")
@@ -102,6 +106,10 @@ sys.stderr.write(str(n) + '\n')
     else
         echo "curl/pipe/aws s3 cp pipeline failed"
         # rm -f "$HASH_FILE" || true
+        echo "=== Python stderr (md5/size or traceback) ==="
+        cat "$HASH_FILE" || true
+        echo "=== AWS CLI stderr ==="
+        cat "$AWS_ERR_FILE" || true
     fi
 
     echo "Attempt $attempt failed, sleeping $RETRY_DELAY seconds then retrying..."
