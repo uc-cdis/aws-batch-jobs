@@ -5,6 +5,12 @@ aws configure set aws_access_key_id "$ACCESS_KEY_ID"
 aws configure set aws_secret_access_key "$SECRET_ACCESS_KEY"
 aws configure set default.s3.multipart_chunksize 500MB
 aws configure set default.s3.max_concurrent_requests 1
+
+export AWS_S3_MULTIPART_CHUNKSIZE=524288000   # 500MB in bytes
+export AWS_S3_MAX_CONCURRENT_REQUESTS=1
+export AWS_S3_MULTIPART_THRESHOLD=8388608     # 8MB in bytes
+
+
 echo "aws credentials configured."
 
 if [[ "$DESTINATION_BUCKET" == s3://* ]]; then
