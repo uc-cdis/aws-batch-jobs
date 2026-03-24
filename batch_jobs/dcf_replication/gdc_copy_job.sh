@@ -9,18 +9,16 @@ aws configure set default.s3.max_concurrent_requests 1
 echo "aws credentials configured."
 
 if [[ "$DESTINATION_BUCKET" == s3://* ]]; then
-  S3_PREFIX="${DESTINATION_BUCKET%/}"
+    S3_PREFIX="${DESTINATION_BUCKET%/}"
 else
-  S3_PREFIX="s3://$DESTINATION_BUCKET"
+    S3_PREFIX="s3://$DESTINATION_BUCKET"
 fi
 
 S3_OBJ="$S3_PREFIX/$KEY"
-
 MAX_RETRIES=3
 RETRY_DELAY=10
 attempt=1
 success=false
-
 AWS_ERR_FILE="$(mktemp /tmp/awserr.XXXXXX)"
 
 #TODO: Remove this. This one is just for testing purposes.
@@ -33,7 +31,6 @@ KEY="final_destination.dat"
 S3_OBJ="s3://test-gdc-abc-phs000222-2-open/final_file99.dat"
 
 while [ "$attempt" -le "$MAX_RETRIES" ]; do
-
     MD5_FILE="$(mktemp /tmp/md5.XXXXXX)"
     SIZE_FILE="$(mktemp /tmp/size.XXXXXX)"
 
@@ -41,19 +38,17 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
     if [ -n "${SIZE:-}" ]; then
         aws_cp_cmd+=(--expected-size "$SIZE")
     fi
-
     if [ -n "${PROFILE_NAME:-}" ]; then
         aws_cp_cmd+=(--profile "$PROFILE_NAME")
+    fi
 
     if curl --fail --location "$CURL_LOCATION" \
-        | tee >(md5sum | awk '{print $1}' > "$MD5_FILE") \
-        | tee >(wc -c    | awk '{print $1}' > "$SIZE_FILE") \
-        | "${aws_cp_cmd[@]}" 2>"$AWS_ERR_FILE"; then
-
+            | tee >(md5sum | awk '{print $1}' > "$MD5_FILE") \
+            | tee >(wc -c  | awk '{print $1}' > "$SIZE_FILE") \
+            | "${aws_cp_cmd[@]}" 2>"$AWS_ERR_FILE"; then
 
         downloaded_size="$(cat "$SIZE_FILE")"
         downloaded_md5="$(cat "$MD5_FILE")"
-
         rm -f "$MD5_FILE" "$SIZE_FILE"
 
         size_ok=true
@@ -89,7 +84,6 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
             echo "Validation failed, removing possibly corrupt S3 object: $S3_OBJ"
             aws s3 rm "$S3_OBJ" || true
         fi
-
     else
         echo "curl/pipe/aws s3 cp pipeline failed"
         cat "$MD5_FILE"
