@@ -4,6 +4,8 @@ set -uxo pipefail
 # Comment this out when we move to using just aws creds account
 aws configure set aws_access_key_id "$ACCESS_KEY_ID"
 aws configure set aws_secret_access_key "$SECRET_ACCESS_KEY"
+aws configure set default.s3.multipart_chunksize 500MB
+aws configure set default.s3.max_concurrent_requests 1
 echo "aws credentials configured."
 
 if [[ "$DESTINATION_BUCKET" == s3://* ]]; then
@@ -18,6 +20,7 @@ MAX_RETRIES=3
 RETRY_DELAY=10
 attempt=1
 success=false
+AWS_ERR_FILE="$(mktemp /tmp/awserr.XXXXXX)"
 
 while [ "$attempt" -le "$MAX_RETRIES" ]; do
 
@@ -31,12 +34,13 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
 
     if [ -n "${PROFILE_NAME:-}" ]; then
         aws_cp_cmd+=(--profile "$PROFILE_NAME")
+    fi
 
     if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
              --header "X-Auth-Token: $GDC_TOKEN" \
         | tee >(md5sum | awk '{print $1}' > "$MD5_FILE") \
         | tee >(wc -c    | awk '{print $1}' > "$SIZE_FILE") \
-        | "${aws_cp_cmd[@]}"; then
+        | "${aws_cp_cmd[@]}" 2>"$AWS_ERR_FILE"; then
 
 
         downloaded_size="$(cat "$SIZE_FILE")"
@@ -81,6 +85,8 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
     else
         echo "curl/pipe/aws s3 cp pipeline failed"
         rm -f "$MD5_FILE" "$SIZE_FILE" || true
+        echo "=== AWS CLI stderr ==="
+        cat "$AWS_ERR_FILE" || true
     fi
 
     echo "Attempt $attempt failed, sleeping $RETRY_DELAY seconds then retrying..."
