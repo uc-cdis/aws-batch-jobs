@@ -3,14 +3,6 @@ set -uxo pipefail
 
 aws configure set aws_access_key_id "$ACCESS_KEY_ID"
 aws configure set aws_secret_access_key "$SECRET_ACCESS_KEY"
-aws configure set default.s3.multipart_chunksize 500MB
-aws configure set default.s3.max_concurrent_requests 1
-
-export AWS_S3_MULTIPART_CHUNKSIZE=524288000   # 500MB in bytes
-export AWS_S3_MAX_CONCURRENT_REQUESTS=1
-export AWS_S3_MULTIPART_THRESHOLD=8388608     # 8MB in bytes
-
-
 echo "aws credentials configured."
 
 if [[ "$DESTINATION_BUCKET" == s3://* ]]; then
@@ -26,55 +18,44 @@ RETRY_DELAY=10
 attempt=1
 success=false
 
-AWS_ERR_FILE="$(mktemp /tmp/awserr.XXXXXX)"
-
-#TODO: Remove this. This one is just for testing purposes.
-ID="51508da5-018b-4393-808a-88a92b843667"
-FILE_NAME="largefile_3.dat"
-SIZE="536870912000"
-MD5SUM="9887d53e52060668fd266480a2f3ad73" #pragma: allowlist secret
-DESTINATION_BUCKET="log-bucket-june2"
-KEY="final_destination.dat"
-S3_OBJ="s3://test-gdc-abc-phs000222-2-open/final_file99.dat"
-
 while [ "$attempt" -le "$MAX_RETRIES" ]; do
     HASH_FILE="$(mktemp /tmp/hashout.XXXXXX)"
-    echo "DEBUG: HASH_FILE=$HASH_FILE"
-    ls -la "$HASH_FILE"
-    aws_cp_cmd=(aws s3 cp - "$S3_OBJ")
-    if [ -n "${SIZE:-}" ]; then
-        aws_cp_cmd+=(--expected-size "$SIZE")
-    fi
+    AWS_ERR_FILE="$(mktemp /tmp/awserr.XXXXXX)"
+
+    aws_cp_cmd=(s5cmd pipe "$S3_OBJ")
+
     if [ -n "${PROFILE_NAME:-}" ]; then
-        aws_cp_cmd+=(--profile "$PROFILE_NAME")
+        aws_cp_cmd+=(--credentials-file ~/.aws/credentials --profile "$PROFILE_NAME")
     fi
 
-    echo "DEBUG: aws_cp_cmd = ${aws_cp_cmd[@]}"
-    # if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
-    #     --header "X-Auth-Token: $GDC_TOKEN" \
-    #TODO: Remove this. This one is just for testing purposes.
-    if curl --fail --location "$CURL_LOCATION" \
+    if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
+        --header "X-Auth-Token: $GDC_TOKEN" \
         | python3 -c "
-import sys, hashlib
-h = hashlib.md5()
-n = 0
-buf_size = 1 * 1024 * 1024
-while True:
-    chunk = sys.stdin.buffer.read(buf_size)
-    if not chunk:
-        break
-    h.update(chunk)
-    n += len(chunk)
-    sys.stdout.buffer.write(chunk)
-    sys.stdout.buffer.flush()
-sys.stderr.write(h.hexdigest() + '\n')
-sys.stderr.write(str(n) + '\n')
+import sys, hashlib, traceback
+try:
+    h = hashlib.md5()
+    n = 0
+    buf_size = 8 * 1024 * 1024
+    while True:
+        chunk = sys.stdin.buffer.read(buf_size)
+        if not chunk:
+            break
+        h.update(chunk)
+        n += len(chunk)
+        sys.stdout.buffer.write(chunk)
+        sys.stdout.buffer.flush()
+    sys.stderr.write(h.hexdigest() + '\n')
+    sys.stderr.write(str(n) + '\n')
+except Exception as e:
+    sys.stderr.write('PYTHON ERROR: ' + str(e) + '\n')
+    sys.stderr.write(traceback.format_exc())
+    sys.exit(1)
 " 2>"$HASH_FILE" \
         | "${aws_cp_cmd[@]}" 2>"$AWS_ERR_FILE"; then
 
         downloaded_md5=$(sed -n '1p' "$HASH_FILE")
         downloaded_size=$(sed -n '2p' "$HASH_FILE")
-        # rm -f "$HASH_FILE"
+        rm -f "$HASH_FILE" "$AWS_ERR_FILE"
 
         size_ok=true
         md5_ok=true
@@ -107,22 +88,21 @@ sys.stderr.write(str(n) + '\n')
             break
         else
             echo "Validation failed, removing possibly corrupt S3 object: $S3_OBJ"
-            aws s3 rm "$S3_OBJ" || true
+            s5cmd rm "$S3_OBJ" || true
         fi
 
     else
-        echo "curl/pipe/aws s3 cp pipeline failed"
-        # rm -f "$HASH_FILE" || true
+        echo "curl/pipe/s5cmd pipeline failed"
         echo "=== Python stderr (md5/size or traceback) ==="
         cat "$HASH_FILE" || true
-        echo "=== AWS CLI stderr ==="
+        echo "=== s5cmd stderr ==="
         cat "$AWS_ERR_FILE" || true
+        rm -f "$HASH_FILE" "$AWS_ERR_FILE" || true
     fi
 
     echo "Attempt $attempt failed, sleeping $RETRY_DELAY seconds then retrying..."
     sleep "$RETRY_DELAY"
     attempt=$((attempt + 1))
-    cat "$HASH_FILE"
 done
 
 if [ "$success" = false ]; then
