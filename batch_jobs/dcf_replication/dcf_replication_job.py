@@ -9,6 +9,7 @@ import logging
 import io
 import datetime
 
+logging.info("new")
 import boto3
 from botocore.exceptions import ClientError
 
