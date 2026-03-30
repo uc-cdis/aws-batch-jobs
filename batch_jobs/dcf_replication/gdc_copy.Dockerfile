@@ -17,7 +17,7 @@ COPY . /${appname}/
 # requires us to run poetry lock here because the poetry.lock file on github was created by a version of poetry that is not available here
 RUN poetry config virtualenvs.create false
 RUN poetry lock && \
-    poetry install -vv --without dev --no-interaction && \
+    poetry install -vv --without dev --no-interaction --no-root && \
     poetry show -v
 
 RUN poetry install --dry-run
