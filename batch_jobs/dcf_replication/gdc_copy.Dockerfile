@@ -10,23 +10,14 @@ FROM base AS builder
 
 USER root
 
-RUN pip install --upgrade poetry
-RUN poetry --version
-# copy ONLY poetry artifact, install the dependencies but not the app;
-# this will make sure that the dependencies are cached
-COPY poetry.lock pyproject.toml /${appname}/
-
-ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+# We were copying just the poetry artifacts but poetry install expects a poetry format. Copying everything copies all the required files.
+COPY . /${appname}/
 
 # install the app dependencies (including awscli and boto3)
-# RUN poetry install -vv --no-root --without dev --no-interaction && \
-#     poetry show -v
-
-RUN poetry install -vv --no-root --without dev --no-interaction && \
-    poetry env info --path
-
-# Now copy the rest of the application
-COPY . /${appname}
+# requires us to run poetry lock here because the poetry.lock file on github was created by a version of poetry that is not available here
+RUN poetry lock && \
+    poetry install -vv --without dev --no-interaction && \
+    poetry show -v
 
 FROM base
 
