@@ -22,8 +22,7 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 #     poetry show -v
 
 RUN poetry install -vv --no-root --without dev --no-interaction && \
-    poetry env info --path && \
-    ls -l /dcf_replication/.venv/
+    poetry env info --path
 
 # Now copy the rest of the application
 COPY . /${appname}
