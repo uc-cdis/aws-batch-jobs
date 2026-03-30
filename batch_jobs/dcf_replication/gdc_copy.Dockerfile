@@ -14,6 +14,8 @@ USER root
 # this will make sure that the dependencies are cached
 COPY poetry.lock pyproject.toml /${appname}/
 
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+
 # install the app dependencies (including awscli and boto3)
 RUN poetry install -vv --no-root --without dev --no-interaction && \
     poetry show -v
