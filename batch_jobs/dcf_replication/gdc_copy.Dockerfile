@@ -44,4 +44,4 @@ COPY --from=builder /$appname /$appname
 WORKDIR /${appname}
 
 ENTRYPOINT ["/bin/bash"]
-CMD [ "poetry", "run", "bash", "/dcf_replication/batch_jobs/dcf_replication/gdc_copy_job.sh" ]
+CMD [ "/dcf_replication/batch_jobs/dcf_replication/gdc_copy_job.sh" ]
