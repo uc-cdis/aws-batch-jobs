@@ -10,6 +10,7 @@ FROM base AS builder
 
 USER root
 
+RUN pip install --upgrade poetry
 RUN poetry --version
 # copy ONLY poetry artifact, install the dependencies but not the app;
 # this will make sure that the dependencies are cached
