@@ -10,6 +10,7 @@ FROM base AS builder
 
 USER root
 
+RUN poetry --version
 # copy ONLY poetry artifact, install the dependencies but not the app;
 # this will make sure that the dependencies are cached
 COPY poetry.lock pyproject.toml /${appname}/
@@ -17,8 +18,12 @@ COPY poetry.lock pyproject.toml /${appname}/
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 
 # install the app dependencies (including awscli and boto3)
+# RUN poetry install -vv --no-root --without dev --no-interaction && \
+#     poetry show -v
+
 RUN poetry install -vv --no-root --without dev --no-interaction && \
-    poetry show -v
+    poetry env info --path && \
+    ls -l /dcf_replication/.venv/
 
 # Now copy the rest of the application
 COPY . /${appname}
