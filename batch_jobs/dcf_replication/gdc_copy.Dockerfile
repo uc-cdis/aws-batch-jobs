@@ -7,45 +7,32 @@ ENV appname=dcf_replication
 WORKDIR /${appname}
 
 FROM base AS builder
-
 USER root
-
-
 COPY poetry.lock pyproject.toml README.md __init__.py /${appname}/
-# We were copying just the poetry artifacts but poetry install expects a poetry format. Copying everything copies all the required files.
-# COPY . /${appname}/
 
-# install the app dependencies (including awscli and boto3)
-# requires us to run poetry lock here because the poetry.lock file on github was created by a version of poetry that is not available here
-RUN poetry lock && \
-    poetry install -vv --without dev --no-interaction --no-root && \
-    poetry show -v
+RUN python -m venv /${appname}/.venv && \
+    /${appname}/.venv/bin/pip install --upgrade pip
 
-RUN poetry install --dry-run
+RUN poetry config virtualenvs.in-project true && \
+    poetry lock && \
+    poetry install --without dev --no-interaction --no-root
 
 COPY . /${appname}/
 
 FROM base
-
 ENV PATH="/${appname}/.venv/bin:$PATH"
-
 USER root
 
 RUN yum update -y && \
-    yum install -y \
-        fuse \
-        && \
+    yum install -y fuse && \
     curl -fsSL https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm \
-        -o /tmp/mount-s3.rpm && \
+      -o /tmp/mount-s3.rpm && \
     yum install -y /tmp/mount-s3.rpm && \
     rm -f /tmp/mount-s3.rpm && \
     yum clean all
 
 RUN mkdir -p mnt
-
-COPY --from=builder /$appname /$appname
-
+COPY --from=builder /${appname} /${appname}   # .venv is now inside here
 WORKDIR /${appname}
-
 ENTRYPOINT ["/bin/bash"]
-CMD [ "/dcf_replication/batch_jobs/dcf_replication/gdc_copy_job.sh" ]
+CMD ["/dcf_replication/batch_jobs/dcf_replication/gdc_copy_job.sh"]
