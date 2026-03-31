@@ -17,7 +17,6 @@ COPY poetry.lock pyproject.toml README.md __init__.py /${appname}/
 
 # install the app dependencies (including awscli and boto3)
 # requires us to run poetry lock here because the poetry.lock file on github was created by a version of poetry that is not available here
-RUN poetry config virtualenvs.create false
 RUN poetry lock && \
     poetry install -vv --without dev --no-interaction --no-root && \
     poetry show -v
