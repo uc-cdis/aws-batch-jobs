@@ -17,5 +17,7 @@ RUN poetry install -vv --no-root --without dev --no-interaction && \
 
 ENV PATH="/bucket-manifest/.venv/bin:$PATH"
 
+COPY --from=builder /venv /venv
+
 ENTRYPOINT [ "python" ]
 CMD [ "poetry", "run", "python", "batch_jobs/bin/run_object_metadata_job.py" ]

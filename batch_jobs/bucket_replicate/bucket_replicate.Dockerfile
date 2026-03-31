@@ -16,3 +16,5 @@ RUN poetry install -vv --no-root --without dev --no-interaction && \
     poetry show -v
 
 ENV PATH="/bucket-replicate/.venv/bin:$PATH"
+
+COPY --from=builder /venv /venv

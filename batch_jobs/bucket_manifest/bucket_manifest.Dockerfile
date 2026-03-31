@@ -15,4 +15,6 @@ WORKDIR /bucket-manifest
 RUN poetry install -vv --no-root --without dev --no-interaction && \
     poetry show -v
 
+COPY --from=builder /venv /venv
+
 ENV PATH="/bucket-manifest/.venv/bin:$PATH"
