@@ -28,7 +28,7 @@
 
     FROM base
 
-    # ENV PATH="/${appname}/.venv/bin:$PATH"
+    ENV PATH="/${appname}/.venv/bin:$PATH"
 
     USER root
 
@@ -46,7 +46,5 @@
 
     COPY --from=builder /$appname /$appname
     COPY --from=builder /venv /venv
-
-    WORKDIR /${appname}
 
     CMD [ "/bin/bash", "-c", "/dcf_replication/batch_jobs/dcf_replication/gdc_copy_job.sh" ]
