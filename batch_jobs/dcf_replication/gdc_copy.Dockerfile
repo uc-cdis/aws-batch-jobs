@@ -15,8 +15,11 @@ USER root
 COPY poetry.lock pyproject.toml /${appname}/
 
 # install the app dependencies (including awscli and boto3)
-RUN poetry install -vv --no-root --without dev --no-interaction && \
+RUN poetry lock && \
+    poetry install -vv --no-root --without dev --no-interaction && \
     poetry show -v
+
+RUN poetry install --dry-run
 
 # Now copy the rest of the application
 COPY . /${appname}
