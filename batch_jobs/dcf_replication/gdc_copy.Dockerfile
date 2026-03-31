@@ -10,8 +10,10 @@ FROM base AS builder
 
 USER root
 
+
+COPY poetry.lock pyproject.toml README.md __init__.py /${appname}/
 # We were copying just the poetry artifacts but poetry install expects a poetry format. Copying everything copies all the required files.
-COPY . /${appname}/
+# COPY . /${appname}/
 
 # install the app dependencies (including awscli and boto3)
 # requires us to run poetry lock here because the poetry.lock file on github was created by a version of poetry that is not available here
@@ -21,6 +23,8 @@ RUN poetry lock && \
     poetry show -v
 
 RUN poetry install --dry-run
+
+COPY . /${appname}/
 
 FROM base
 
