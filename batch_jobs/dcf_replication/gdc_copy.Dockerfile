@@ -49,5 +49,4 @@
 
     WORKDIR /${appname}
 
-    ENTRYPOINT ["/bin/bash"]
-    CMD [ "/dcf_replication/batch_jobs/dcf_replication/gdc_copy_job.sh" ]
+    CMD [ "/bin/bash", "-c", "/dcf_replication/batch_jobs/dcf_replication/gdc_copy_job.sh" ]
