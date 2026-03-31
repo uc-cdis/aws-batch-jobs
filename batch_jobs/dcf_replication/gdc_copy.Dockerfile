@@ -28,7 +28,7 @@
 
     FROM base
 
-    ENV PATH="/${appname}/.venv/bin:$PATH"
+    # ENV PATH="/${appname}/.venv/bin:$PATH"
 
     USER root
 
