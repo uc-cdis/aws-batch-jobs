@@ -47,4 +47,4 @@
     COPY --from=builder /$appname /$appname
     COPY --from=builder /venv /venv
 
-    CMD [ "/bin/bash", "-c", "/dcf_replication/batch_jobs/dcf_replication/gdc_copy_job.sh" ]
+    CMD [ "/bin/bash", "-c", "/batch_jobs/dcf_replication/gdc_copy_job.sh" ]
