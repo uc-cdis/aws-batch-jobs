@@ -32,6 +32,7 @@ FROM base
 
 ENV PATH="/${appname}/.venv/bin:$PATH"
 
+USER root
 
 RUN yum update -y && \
     yum install -y \
