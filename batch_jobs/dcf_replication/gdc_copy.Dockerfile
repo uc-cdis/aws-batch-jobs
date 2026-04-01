@@ -6,32 +6,32 @@ ENV appname=dcf_replication
 
 WORKDIR /${appname}
 
-RUN chown -R gen3:gen3 /${appname}
-
-# Builder stage
 FROM base AS builder
 
-USER gen3
+USER root
 
-# RUN mkdir ~/.aws
-# RUN chown -R gen3:gen3 ~/.aws
+# copy ONLY poetry artifact, install the dependencies but not the app;
+# this will make sure that the dependencies are \
 
-COPY poetry.lock pyproject.toml /${appname}/
+COPY pyproject.toml /${appname}/
+
+RUN poetry lock
 
 # install the app dependencies (including awscli and boto3)
-RUN poetry install -vv --no-interaction --without dev
+RUN poetry install -vv --no-root --without dev --no-interaction && \
+    poetry show -v
 
-COPY --chown=gen3:gen3 . /$appname
+RUN poetry install --dry-run
 
-RUN poetry install -vv --no-interaction --without dev
+USER root
 
-# Final stage
+# Now copy the rest of the application
+COPY . /${appname}
+
 FROM base
 
-COPY --chown=gen3:gen3 --from=builder /$appname /$appname
-COPY --chown=gen3:gen3 --from=builder /venv /venv
-
 ENV PATH="/${appname}/.venv/bin:$PATH"
+
 USER root
 
 RUN yum update -y && \
@@ -46,6 +46,8 @@ RUN yum update -y && \
 
 RUN mkdir -p mnt
 
-USER gen3
+COPY --from=builder /$appname /$appname
+COPY --from=builder /venv /venv
 
-CMD [ "/bin/bash", "-c", "/${appname}/batch_jobs/dcf_replication/gdc_copy_job.sh" ]
+ENTRYPOINT ["/bin/bash"]
+CMD [ "/dcf_replication/batch_jobs/dcf_replication/gdc_copy_job.sh" ]
