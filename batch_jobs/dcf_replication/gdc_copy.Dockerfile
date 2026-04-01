@@ -11,28 +11,26 @@ RUN chown -R gen3:gen3 /${appname}
 # Builder stage
 FROM base AS builder
 
-USER root
-
-RUN mkdir /.aws
-RUN chown -R gen3:gen3 /venv
-RUN chown -R gen3:gen3 /.aws
-
 USER gen3
+
+# RUN mkdir ~/.aws
+# RUN chown -R gen3:gen3 ~/.aws
 
 COPY poetry.lock pyproject.toml /${appname}/
 
 # install the app dependencies (including awscli and boto3)
 RUN poetry install -vv --no-interaction --without dev
 
-COPY --chown=gen3:gen3 . /${appname}
+COPY --chown=gen3:gen3 . /$appname
 
 RUN poetry install -vv --no-interaction --without dev
 
 # Final stage
 FROM base
 
-COPY --from=builder /${appname} /${appname}
-COPY --from=builder /venv /venv
+COPY --chown=gen3:gen3 --from=builder /$appname /$appname
+COPY --chown=gen3:gen3 --from=builder /venv /venv
+
 ENV PATH="/${appname}/.venv/bin:$PATH"
 USER root
 
