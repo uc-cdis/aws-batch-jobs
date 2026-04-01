@@ -12,7 +12,10 @@ RUN chown -R gen3:gen3 /${appname}
 FROM base AS builder
 
 USER root
+
+RUN mkdir /.aws
 RUN chown -R gen3:gen3 /venv
+RUN chown -R gen3:gen3 /.aws
 
 USER gen3
 
