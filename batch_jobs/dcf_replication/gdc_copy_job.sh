@@ -4,8 +4,7 @@ set -uxo pipefail
 # Comment this out when we move to using just aws creds account
 aws configure set aws_access_key_id "$ACCESS_KEY_ID"
 aws configure set aws_secret_access_key "$SECRET_ACCESS_KEY"
-aws configure set default.s3.multipart_chunksize 50MB
-aws configure set default.s3.max_concurrent_requests 1
+aws configure set s3.preferred_transfer_client crt
 echo "aws credentials configured."
 
 if [[ "$DESTINATION_BUCKET" == s3://* ]]; then
