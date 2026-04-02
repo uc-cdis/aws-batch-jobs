@@ -26,7 +26,6 @@ JOB_STATUS_KEY = "job_status"
 REGION = os.environ.get("REGION", "us-east-1")
 NUMBER_OF_THREADS = 5
 MAX_RETRIES = 3
-CURL_LOCATION = ""
 
 
 def run_job(
@@ -34,7 +33,6 @@ def run_job(
     job_queue,
     job_definition,
     output_manifest_bucket,
-    curl_location,
     thread_count=NUMBER_OF_THREADS,
     max_retries=MAX_RETRIES,
 ):
@@ -50,12 +48,10 @@ def run_job(
     """
     global NUMBER_OF_THREADS
     global MAX_RETRIES
-    global CURL_LOCATION
 
     NUMBER_OF_THREADS = int(thread_count)
     MAX_RETRIES = int(max_retries)
     START_TIME = int(time.time())
-    CURL_LOCATION = curl_location
     logging.info(
         f"Submission Job started at {START_TIME} with {NUMBER_OF_THREADS} threads and {MAX_RETRIES} retries."
     )
@@ -102,10 +98,10 @@ def submit_job(job_queue, job_definition, file):
         file["md5"],
     )
 
-    # if exists:
-    #     logging.info(f"Skipping {key}: {message}")
-    #     file[JOB_STATUS_KEY] = "SKIPPED"
-    #     return file
+    if exists:
+        logging.info(f"Skipping {key}: {message}")
+        file[JOB_STATUS_KEY] = "SKIPPED"
+        return file
 
     client = boto3.client("batch", region_name=REGION)
     n_tries = 0
@@ -128,7 +124,6 @@ def submit_job(job_queue, job_definition, file):
                         {"value": key, "name": "KEY"},
                         {"value": GDC_TOKEN, "name": "GDC_TOKEN"},
                         {"value": "default", "name": "PROFILE_NAME"},
-                        {"value": CURL_LOCATION, "name": "CURL_LOCATION"},
                     ]
                 },
             )
