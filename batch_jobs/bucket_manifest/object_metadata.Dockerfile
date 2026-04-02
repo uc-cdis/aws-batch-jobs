@@ -1,6 +1,6 @@
-ARG AZLINUX_BASE_VERSION=master
+ARG AZLINUX_BASE_VERSION=3.13-pythonnginx
 
-FROM quay.io/cdis/python-nginx-al:${AZLINUX_BASE_VERSION} AS base
+FROM quay.io/cdis/amazonlinux-base:${AZLINUX_BASE_VERSION} AS base
 
 USER root
 
@@ -18,4 +18,4 @@ RUN poetry install -vv --no-root --without dev --no-interaction && \
 ENV PATH="/bucket-manifest/.venv/bin:$PATH"
 
 ENTRYPOINT [ "python" ]
-CMD [ "batch_jobs/bin/run_object_metadata_job.py" ]
+CMD [ "poetry", "run", "python", "batch_jobs/bin/run_object_metadata_job.py" ]

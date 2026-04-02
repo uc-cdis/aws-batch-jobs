@@ -4,6 +4,8 @@ set -uxo pipefail
 # Comment this out when we move to using just aws creds account
 aws configure set aws_access_key_id "$ACCESS_KEY_ID"
 aws configure set aws_secret_access_key "$SECRET_ACCESS_KEY"
+aws configure set default.s3.multipart_chunksize 500MB
+aws configure set default.s3.max_concurrent_requests 1
 echo "aws credentials configured."
 
 if [[ "$DESTINATION_BUCKET" == s3://* ]]; then
@@ -31,6 +33,7 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
 
     if [ -n "${PROFILE_NAME:-}" ]; then
         aws_cp_cmd+=(--profile "$PROFILE_NAME")
+    fi
 
     if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
              --header "X-Auth-Token: $GDC_TOKEN" \
