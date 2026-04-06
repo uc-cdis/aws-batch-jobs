@@ -3,8 +3,8 @@ set -uxo pipefail
 
 aws configure set aws_access_key_id "$ACCESS_KEY_ID"
 aws configure set aws_secret_access_key "$SECRET_ACCESS_KEY"
-aws configure set default.s3.multipart_chunksize 100MB
-aws configure set default.s3.max_concurrent_requests 1
+# aws configure set default.s3.multipart_chunksize 100MB
+# aws configure set default.s3.max_concurrent_requests 1
 echo "aws credentials configured."
 
 if [[ "$DESTINATION_BUCKET" == s3://* ]]; then
@@ -24,10 +24,14 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
     HASH_FILE="$(mktemp /tmp/hashout.XXXXXX)"
     AWS_ERR_FILE="$(mktemp /tmp/awserr.XXXXXX)"
 
-    aws_cp_cmd=(s5cmd pipe "$S3_OBJ")
+    aws_cp_cmd=(aws s3 cp - "$S3_OBJ")
+
+    if [ -n "${SIZE:-}" ]; then
+        aws_cp_cmd+=(--expected-size "$SIZE")
+    fi
 
     if [ -n "${PROFILE_NAME:-}" ]; then
-        aws_cp_cmd+=(--credentials-file ~/.aws/credentials --profile "$PROFILE_NAME")
+        aws_cp_cmd+=(--profile "$PROFILE_NAME")
     fi
 
     if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
@@ -90,14 +94,14 @@ except Exception as e:
             break
         else
             echo "Validation failed, removing possibly corrupt S3 object: $S3_OBJ"
-            s5cmd rm "$S3_OBJ" || true
+            aws s3 rm "$S3_OBJ" || true
         fi
 
     else
-        echo "curl/pipe/s5cmd pipeline failed"
+        echo "curl/pipe/aws s3 pipeline failed"
         echo "=== Python stderr (md5/size or traceback) ==="
         cat "$HASH_FILE" || true
-        echo "=== s5cmd stderr ==="
+        echo "=== aws s3 stderr ==="
         cat "$AWS_ERR_FILE" || true
         rm -f "$HASH_FILE" "$AWS_ERR_FILE" || true
     fi

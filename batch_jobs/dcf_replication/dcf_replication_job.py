@@ -57,7 +57,6 @@ def run_job(
     )
     local_manifest = get_manifest_from_bucket(manifest_file)
     parsed_data = parse_manifest_file(local_manifest)
-    parsed_data = parsed_data[:1]
     submitted, skipped, failed = submit_jobs(
         parsed_data,
         job_queue,
