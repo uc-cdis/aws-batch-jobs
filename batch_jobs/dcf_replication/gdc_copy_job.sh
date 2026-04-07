@@ -25,7 +25,7 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
     aws_cp_cmd=(s5cmd pipe "$S3_OBJ")
 
     if [ -n "${PROFILE_NAME:-}" ]; then
-        aws_cp_cmd+=(--credentials-file ~/.aws/credentials --profile "$PROFILE_NAME")
+        export AWS_PROFILE="$PROFILE_NAME"
     fi
 
     if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
