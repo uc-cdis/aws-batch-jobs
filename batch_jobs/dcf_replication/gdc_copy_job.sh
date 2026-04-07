@@ -1,16 +1,16 @@
 #!/bin/bash
 set -uxo pipefail
 
-# Comment this out when we move to using just aws creds account
 aws configure set aws_access_key_id "$ACCESS_KEY_ID"
 aws configure set aws_secret_access_key "$SECRET_ACCESS_KEY"
-aws configure set s3.preferred_transfer_client crt
+# aws configure set default.s3.multipart_chunksize 100MB
+# aws configure set default.s3.max_concurrent_requests 1
 echo "aws credentials configured."
 
 if [[ "$DESTINATION_BUCKET" == s3://* ]]; then
-  S3_PREFIX="${DESTINATION_BUCKET%/}"
+    S3_PREFIX="${DESTINATION_BUCKET%/}"
 else
-  S3_PREFIX="s3://$DESTINATION_BUCKET"
+    S3_PREFIX="s3://$DESTINATION_BUCKET"
 fi
 
 S3_OBJ="$S3_PREFIX/$KEY"
@@ -21,11 +21,11 @@ attempt=1
 success=false
 
 while [ "$attempt" -le "$MAX_RETRIES" ]; do
-
-    MD5_FILE="$(mktemp /tmp/md5.XXXXXX)"
-    SIZE_FILE="$(mktemp /tmp/size.XXXXXX)"
+    HASH_FILE="$(mktemp /tmp/hashout.XXXXXX)"
+    AWS_ERR_FILE="$(mktemp /tmp/awserr.XXXXXX)"
 
     aws_cp_cmd=(aws s3 cp - "$S3_OBJ")
+
     if [ -n "${SIZE:-}" ]; then
         aws_cp_cmd+=(--expected-size "$SIZE")
     fi
@@ -35,16 +35,33 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
     fi
 
     if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
-             --header "X-Auth-Token: $GDC_TOKEN" \
-        | tee >(md5sum | awk '{print $1}' > "$MD5_FILE") \
-        | tee >(wc -c    | awk '{print $1}' > "$SIZE_FILE") \
-        | "${aws_cp_cmd[@]}"; then
+        --header "X-Auth-Token: $GDC_TOKEN" \
+        | python3 -c "
+import sys, hashlib, traceback
+try:
+    h = hashlib.md5()
+    n = 0
+    buf_size = 8 * 1024 * 1024
+    while True:
+        chunk = sys.stdin.buffer.read(buf_size)
+        if not chunk:
+            break
+        h.update(chunk)
+        n += len(chunk)
+        sys.stdout.buffer.write(chunk)
+        sys.stdout.buffer.flush()
+    sys.stderr.write(h.hexdigest() + '\n')
+    sys.stderr.write(str(n) + '\n')
+except Exception as e:
+    sys.stderr.write('PYTHON ERROR: ' + str(e) + '\n')
+    sys.stderr.write(traceback.format_exc())
+    sys.exit(1)
+" 2>"$HASH_FILE" \
+        | "${aws_cp_cmd[@]}" 2>"$AWS_ERR_FILE"; then
 
-
-        downloaded_size="$(cat "$SIZE_FILE")"
-        downloaded_md5="$(cat "$MD5_FILE")"
-
-        rm -f "$MD5_FILE" "$SIZE_FILE"
+        downloaded_md5=$(sed -n '1p' "$HASH_FILE")
+        downloaded_size=$(sed -n '2p' "$HASH_FILE")
+        rm -f "$HASH_FILE" "$AWS_ERR_FILE"
 
         size_ok=true
         md5_ok=true
@@ -81,8 +98,12 @@ while [ "$attempt" -le "$MAX_RETRIES" ]; do
         fi
 
     else
-        echo "curl/pipe/aws s3 cp pipeline failed"
-        rm -f "$MD5_FILE" "$SIZE_FILE" || true
+        echo "curl/pipe/aws s3 pipeline failed"
+        echo "=== Python stderr (md5/size or traceback) ==="
+        cat "$HASH_FILE" || true
+        echo "=== aws s3 stderr ==="
+        cat "$AWS_ERR_FILE" || true
+        rm -f "$HASH_FILE" "$AWS_ERR_FILE" || true
     fi
 
     echo "Attempt $attempt failed, sleeping $RETRY_DELAY seconds then retrying..."

@@ -7,7 +7,6 @@ ENV appname=dcf_replication
 WORKDIR /${appname}
 
 FROM base AS builder
-
 USER root
 
 # copy ONLY poetry artifact, install the dependencies but not the app;
@@ -29,15 +28,13 @@ USER root
 COPY . /${appname}
 
 FROM base
-
 ENV PATH="/${appname}/.venv/bin:$PATH"
-
 USER root
 
 RUN yum update -y && \
     yum install -y \
         fuse \
-        && \
+    && \
     curl -fsSL https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm \
         -o /tmp/mount-s3.rpm && \
     yum install -y /tmp/mount-s3.rpm && \
@@ -45,7 +42,6 @@ RUN yum update -y && \
     yum clean all
 
 RUN mkdir -p mnt
-
 COPY --from=builder /$appname /$appname
 COPY --from=builder /venv /venv
 

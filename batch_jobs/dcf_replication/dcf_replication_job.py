@@ -58,7 +58,10 @@ def run_job(
     local_manifest = get_manifest_from_bucket(manifest_file)
     parsed_data = parse_manifest_file(local_manifest)
     submitted, skipped, failed = submit_jobs(
-        parsed_data, job_queue, job_definition, output_manifest_bucket
+        parsed_data,
+        job_queue,
+        job_definition,
+        output_manifest_bucket,
     )
 
     logging.info(f"Job submission summary:")
@@ -143,7 +146,12 @@ def submit_job(job_queue, job_definition, file):
     return file
 
 
-def submit_jobs(file_info, job_queue, job_definition, output_manifest_bucket):
+def submit_jobs(
+    file_info,
+    job_queue,
+    job_definition,
+    output_manifest_bucket,
+):
     """
     Submit jobs to the queue
 
