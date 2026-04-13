@@ -280,9 +280,6 @@ def get_manifest_from_bucket(s3_location):
     session = boto3.Session(profile_name="default")
     s3 = session.client("s3")
 
-    credentials = session.get_credentials().get_frozen_credentials()
-    print(f"Access key: {credentials.access_key[:8]}...")  # just the prefix
-
     bucket, key = s3_location.replace("s3://", "").split("/", 1)
     local_manifest = "/tmp/{}".format(key.split("/")[-1])
     try:
