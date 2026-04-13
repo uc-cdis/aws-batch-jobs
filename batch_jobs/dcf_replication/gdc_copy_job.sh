@@ -33,7 +33,7 @@ TARGET_BUCKET  = "${DESTINATION_BUCKET}"
 OBJECT_PATH    = "${KEY}"
 FILE_SIZE      = int("${SIZE}")
 EXPECTED_MD5   = "${MD5SUM:-}"
-CHUNK_SIZE     = 512 * 1024 * 1024   # 512MB per part
+CHUNK_SIZE     = 256 * 1024 * 1024   # 256MB per part
 RETRIES_NUM    = 3
 
 s3 = boto3.client("s3")
@@ -67,6 +67,7 @@ try:
                         "Range": f"bytes={start}-{end}",
                     },
                     timeout=300,
+                    stream=True,
                 )
                 if response.status_code == 403:
                     raise Exception("403 Forbidden - check GDC token")
