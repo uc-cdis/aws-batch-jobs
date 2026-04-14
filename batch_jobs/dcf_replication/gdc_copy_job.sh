@@ -47,7 +47,7 @@ def generate_chunk_data_list(size, data_size):
 
 s3 = boto3.client("s3")
 
-multipart = s3.create_multipart_upload(Bucket=TARGET_BUCKET, Key=OBJECT_PATH, ALC="bucket-owner-full-control")
+multipart = s3.create_multipart_upload(Bucket=TARGET_BUCKET, Key=OBJECT_PATH, ACL="bucket-owner-full-control")
 upload_id = multipart["UploadId"]
 print(f"Started multipart upload: {upload_id}")
 
