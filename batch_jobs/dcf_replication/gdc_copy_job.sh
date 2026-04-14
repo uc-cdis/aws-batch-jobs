@@ -27,18 +27,18 @@ import time
 import math
 
 # Config
-DATA_ENDPOINT  = "https://api.gdc.cancer.gov/data/${ID}"
-GDC_TOKEN      = "${GDC_TOKEN}"
-TARGET_BUCKET  = "${DESTINATION_BUCKET}"
-OBJECT_PATH    = "${KEY}"
-FILE_SIZE      = int("${SIZE}")
-EXPECTED_MD5   = "${MD5SUM:-}"
-CHUNK_SIZE     = 256 * 1024 * 1024   # 256MB per part
-RETRIES_NUM    = 3
+DATA_ENDPOINT = "https://api.gdc.cancer.gov/data/${ID}"
+GDC_TOKEN     = "${GDC_TOKEN}"
+TARGET_BUCKET = "${DESTINATION_BUCKET}"
+OBJECT_PATH   = "${KEY}"
+FILE_SIZE     = int("${SIZE}")
+EXPECTED_MD5  = "${MD5SUM:-}"
+CHUNK_SIZE    = 128 * 1024 * 1024
+PIECE_SIZE    = 64 * 1024 * 1024
+RETRIES_NUM   = 3
 
 s3 = boto3.client("s3")
 
-# Initiate multipart upload
 multipart = s3.create_multipart_upload(Bucket=TARGET_BUCKET, Key=OBJECT_PATH)
 upload_id = multipart["UploadId"]
 print(f"Started multipart upload: {upload_id}", flush=True)
@@ -73,18 +73,24 @@ try:
                     raise Exception("403 Forbidden - check GDC token")
                 response.raise_for_status()
 
-                chunk         = response.content
-                expected_size = end - start + 1
+                chunk      = b""
+                chunk_md5  = hashlib.md5()
+                for piece in response.iter_content(chunk_size=PIECE_SIZE):
+                    chunk += piece
+                    chunk_md5.update(piece)
 
+                expected_size = end - start + 1
                 if len(chunk) == expected_size:
                     chunk_downloaded = True
                 else:
                     print(f"Chunk size mismatch: expected {expected_size}, got {len(chunk)}", flush=True)
+                    chunk = None
                     tries += 1
                     time.sleep(5)
 
             except Exception as e:
                 print(f"Error downloading part {part_number} (attempt {tries + 1}): {e}", flush=True)
+                chunk = None
                 tries += 1
                 time.sleep(5)
 
@@ -114,10 +120,10 @@ try:
         if not part_uploaded:
             raise Exception(f"Failed to upload part {part_number} after {RETRIES_NUM} retries")
 
-        # Update md5 and progress
+        # Update overall md5 and progress, then free memory
         md5_hash.update(chunk)
         uploaded += len(chunk)
-        chunk = None  # discard chunk from memory immediately
+        chunk = None
         print(f"Part {part_number}/{total_parts} done ({uploaded / 1024 / 1024:.1f} MB uploaded)", flush=True)
 
     # Complete multipart upload
