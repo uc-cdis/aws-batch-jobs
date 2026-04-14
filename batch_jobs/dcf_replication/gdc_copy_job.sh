@@ -19,14 +19,13 @@ success=false
 
 while [ "$attempt" -le "$MAX_RETRIES" ]; do
     if python3 - <<EOF
-import requests
+import urllib
 import boto3
 import hashlib
 import sys
 import time
 import math
 
-# Config
 DATA_ENDPOINT = "https://api.gdc.cancer.gov/data/${ID}"
 GDC_TOKEN     = "${GDC_TOKEN}"
 TARGET_BUCKET = "${DESTINATION_BUCKET}"
@@ -37,11 +36,20 @@ CHUNK_SIZE    = 128 * 1024 * 1024
 PIECE_SIZE    = 64 * 1024 * 1024
 RETRIES_NUM   = 3
 
+def generate_chunk_data_list(size, data_size):
+    L = []
+    idx = 0
+    while idx < size:
+        L.append((idx, min(idx + data_size - 1, size - 1)))
+        idx += data_size
+
+    return L
+
 s3 = boto3.client("s3")
 
-multipart = s3.create_multipart_upload(Bucket=TARGET_BUCKET, Key=OBJECT_PATH)
+multipart = s3.create_multipart_upload(Bucket=TARGET_BUCKET, Key=OBJECT_PATH, ACL="bucket-owner-full-control")
 upload_id = multipart["UploadId"]
-print(f"Started multipart upload: {upload_id}", flush=True)
+print(f"Started multipart upload: {upload_id}")
 
 parts       = []
 md5_hash    = hashlib.md5()
@@ -49,10 +57,9 @@ total_parts = math.ceil(FILE_SIZE / CHUNK_SIZE)
 uploaded    = 0
 
 try:
-    for part_number in range(1, total_parts + 1):
-        start = (part_number - 1) * CHUNK_SIZE
-        end   = min(start + CHUNK_SIZE, FILE_SIZE) - 1
-
+    for n_part, data_range in enumerate(generate_chunk_data_list(FILE_SIZE, CHUNK_SIZE)):
+        start, end = data_range
+        part_number = n_part + 1
         # Download chunk with retries
         chunk            = None
         tries            = 0
@@ -60,36 +67,27 @@ try:
 
         while tries < RETRIES_NUM and not chunk_downloaded:
             try:
-                response = requests.get(
+                response = urllib.request.Request(
                     DATA_ENDPOINT,
                     headers={
                         "X-Auth-Token": GDC_TOKEN,
                         "Range": f"bytes={start}-{end}",
                     },
-                    timeout=300,
-                    stream=True,
                 )
-                if response.status_code == 403:
-                    raise Exception("403 Forbidden - check GDC token")
-                response.raise_for_status()
 
-                chunk      = b""
-                chunk_md5  = hashlib.md5()
-                for piece in response.iter_content(chunk_size=PIECE_SIZE):
-                    chunk += piece
-                    chunk_md5.update(piece)
+                chunk = urllib.request.urlopen(response).read()
 
-                expected_size = end - start + 1
-                if len(chunk) == expected_size:
+                if len(chunk) == end - start + 1:
                     chunk_downloaded = True
                 else:
-                    print(f"Chunk size mismatch: expected {expected_size}, got {len(chunk)}", flush=True)
+                    print(f"Chunk size mismatch: expected {end - start + 1}, got {len(chunk)}")
                     chunk = None
                     tries += 1
                     time.sleep(5)
+                print(f"Downloading {DATA_ENDPOINT}: {part_number(end - start + 1)}/{FILE_SIZE}")
 
             except Exception as e:
-                print(f"Error downloading part {part_number} (attempt {tries + 1}): {e}", flush=True)
+                print(f"Error downloading part {part_number} (attempt {tries + 1}): {e}")
                 chunk = None
                 tries += 1
                 time.sleep(5)
@@ -113,7 +111,7 @@ try:
                 parts.append({"PartNumber": part_number, "ETag": res["ETag"]})
                 part_uploaded = True
             except Exception as e:
-                print(f"Error uploading part {part_number} (attempt {tries + 1}): {e}", flush=True)
+                print(f"Error uploading part {part_number} (attempt {tries + 1}): {e}")
                 tries += 1
                 time.sleep(5)
 
@@ -124,7 +122,7 @@ try:
         md5_hash.update(chunk)
         uploaded += len(chunk)
         chunk = None
-        print(f"Part {part_number}/{total_parts} done ({uploaded / 1024 / 1024:.1f} MB uploaded)", flush=True)
+        print(f"Part {part_number}/{total_parts} done ({uploaded / 1024 / 1024:.1f} MB uploaded)")
 
     # Complete multipart upload
     s3.complete_multipart_upload(
@@ -133,41 +131,41 @@ try:
         UploadId=upload_id,
         MultipartUpload={"Parts": parts},
     )
-    print("Multipart upload complete.", flush=True)
+    print("Multipart upload complete.")
 
     # Validate size
     if FILE_SIZE and uploaded != FILE_SIZE:
-        print(f"Size mismatch: expected {FILE_SIZE}, got {uploaded}", flush=True)
+        print(f"Size mismatch: expected {FILE_SIZE}, got {uploaded}")
         s3.delete_object(Bucket=TARGET_BUCKET, Key=OBJECT_PATH)
         sys.exit(1)
     else:
-        print(f"Size validation passed: {uploaded} bytes", flush=True)
+        print(f"Size validation passed: {uploaded} bytes")
 
     # Validate md5
     final_md5 = md5_hash.hexdigest()
-    print(f"Computed MD5: {final_md5}", flush=True)
+    print(f"Computed MD5: {final_md5}")
     if EXPECTED_MD5 and final_md5 != EXPECTED_MD5:
-        print(f"MD5 mismatch: expected {EXPECTED_MD5}, got {final_md5}", flush=True)
+        print(f"MD5 mismatch: expected {EXPECTED_MD5}, got {final_md5}")
         s3.delete_object(Bucket=TARGET_BUCKET, Key=OBJECT_PATH)
         sys.exit(1)
     elif EXPECTED_MD5:
-        print("MD5 validation passed.", flush=True)
+        print("MD5 validation passed.")
     else:
-        print("MD5SUM not set, skipping validation.", flush=True)
+        print("MD5SUM not set, skipping validation.")
 
     sys.exit(0)
 
 except Exception as e:
-    print(f"ERROR: {e}", flush=True)
+    print(f"ERROR: {e}")
     try:
         s3.abort_multipart_upload(
             Bucket=TARGET_BUCKET,
             Key=OBJECT_PATH,
             UploadId=upload_id,
         )
-        print("Multipart upload aborted.", flush=True)
+        print("Multipart upload aborted.")
     except Exception as abort_err:
-        print(f"Failed to abort multipart upload: {abort_err}", flush=True)
+        print(f"Failed to abort multipart upload: {abort_err}")
     sys.exit(1)
 EOF
     then
