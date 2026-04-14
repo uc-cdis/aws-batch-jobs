@@ -84,7 +84,7 @@ try:
                     chunk = None
                     tries += 1
                     time.sleep(5)
-                print(f"Downloading {DATA_ENDPOINT}: {part_number(end - start + 1)}/{FILE_SIZE}")
+                print(f"Downloading {DATA_ENDPOINT}: {part_number*(end - start + 1)}/{FILE_SIZE}")
 
             except Exception as e:
                 print(f"Error downloading part {part_number} (attempt {tries + 1}): {e}")
