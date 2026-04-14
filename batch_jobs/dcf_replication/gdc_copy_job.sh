@@ -57,9 +57,9 @@ total_parts = math.ceil(FILE_SIZE / CHUNK_SIZE)
 uploaded    = 0
 
 try:
-    for part_number, data_range in enumerate(generate_chunk_data_list(FILE_SIZE, CHUNK_SIZE)):
+    for n_part, data_range in enumerate(generate_chunk_data_list(FILE_SIZE, CHUNK_SIZE)):
         start, end = data_range
-
+        part_number = n_part + 1
         # Download chunk with retries
         chunk            = None
         tries            = 0
