@@ -224,6 +224,7 @@ def parse_arguments():
         default=3,
         help="Number of retries for both download and upload",
     )
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
