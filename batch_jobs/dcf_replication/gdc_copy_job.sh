@@ -19,16 +19,7 @@ RETRY_DELAY=10
 attempt=1
 success=false
 
-DATA_ENDPOINT = "https://api.gdc.cancer.gov/data/${ID}"
-GDC_TOKEN     = "${GDC_TOKEN}"
-TARGET_BUCKET = "${DESTINATION_BUCKET}"
-OBJECT_PATH   = "${KEY}"
-FILE_SIZE     = int("${SIZE}")
-EXPECTED_MD5  = "${MD5SUM:-}"
-CHUNK_SIZE    = 128 * 1024 * 1024
-
-
-command="python3 ./batch_jobs/dcf_replication/file_get_upload.py --file-upload $ID --gdc_token $GDC_TOKEN --target_bucket $DESTINATION_BUCKET --object-path $OBJECT_PATH --file_size $FILE_SIZE --expected_md5 $EXPECTED_MD5"
+command="python3 ./batch_jobs/dcf_replication/file_get_upload.py --file-upload $ID --gdc_token $GDC_TOKEN --target_bucket $DESTINATION_BUCKET --object-path $KEY --file_size $SIZE --expected_md5 $MD5SUM"
 
 while [ "$attempt" -le "$MAX_RETRIES" ]; do
     if $command; then
