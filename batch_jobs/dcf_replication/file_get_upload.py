@@ -8,11 +8,6 @@ import urllib
 import boto3
 
 
-GDC_TOKEN = "${GDC_TOKEN}"
-TARGET_BUCKET = "${DESTINATION_BUCKET}"
-OBJECT_PATH = "${KEY}"
-FILE_SIZE = int("${SIZE}")
-EXPECTED_MD5 = "${MD5SUM:-}"
 CHUNK_SIZE = 128 * 1024 * 1024
 RETRIES_NUM = 3
 
