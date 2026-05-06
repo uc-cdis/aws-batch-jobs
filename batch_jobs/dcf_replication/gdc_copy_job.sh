@@ -17,7 +17,7 @@ RETRY_DELAY=10
 attempt=1
 success=false
 
-command="python3 ./batch_jobs/dcf_replication/file_get_upload.py upload_data --file-upload $ID --gdc_token $GDC_TOKEN --target_bucket $DESTINATION_BUCKET --object-path $KEY --file_size $SIZE --expected_md5 $MD5SUM"
+command="python3 ./batch_jobs/dcf_replication/file_get_upload.py upload_data --file_id $ID --gdc_token $GDC_TOKEN --target_bucket $DESTINATION_BUCKET --object_path $KEY --file_size $SIZE --expected_md5 $MD5SUM"
 
 while [ "$attempt" -le "$MAX_RETRIES" ]; do
     if $command; then
