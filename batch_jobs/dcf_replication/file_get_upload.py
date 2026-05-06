@@ -235,8 +235,8 @@ if __name__ == "__main__":
             args.gdc_token,
             args.target_bucket,
             args.object_path,
-            args.file_size,
+            int(args.file_size),
             args.expected_md5,
-            args.chunk_size,
-            args.retry,
+            int(args.chunk_size),
+            int(args.retry),
         )
