@@ -56,10 +56,10 @@ def api_to_bucket_copy(
             part_number = n_part + 1
             # Download chunk with retries
             chunk = None
-            tries = 0
+            download_tries = 0
             chunk_downloaded = False
 
-            while tries < retries_num and not chunk_downloaded:
+            while download_tries < retries_num and not chunk_downloaded:
                 try:
                     response = urllib.request.Request(
                         DATA_ENDPOINT,
@@ -78,7 +78,7 @@ def api_to_bucket_copy(
                             f"Chunk size mismatch: expected {end - start + 1}, got {len(chunk)}"
                         )
                         chunk = None
-                        tries += 1
+                        download_tries += 1
                         time.sleep(5)
                     print(
                         f"Downloading {DATA_ENDPOINT}: {part_number*(end - start + 1)}/{file_size}"
@@ -86,10 +86,10 @@ def api_to_bucket_copy(
 
                 except Exception as e:
                     print(
-                        f"Error downloading part {part_number} (attempt {tries + 1}): {e}"
+                        f"Error downloading part {part_number} (attempt {download_tries + 1}): {e}"
                     )
                     chunk = None
-                    tries += 1
+                    download_tries += 1
                     time.sleep(5)
 
             if not chunk_downloaded:
@@ -98,10 +98,10 @@ def api_to_bucket_copy(
                 )
 
             # Upload part with retries
-            tries = 0
+            upload_tries = 0
             part_uploaded = False
 
-            while tries < retries_num and not part_uploaded:
+            while upload_tries < retries_num and not part_uploaded:
                 try:
                     res = s3.upload_part(
                         Body=chunk,
@@ -114,9 +114,9 @@ def api_to_bucket_copy(
                     part_uploaded = True
                 except Exception as e:
                     print(
-                        f"Error uploading part {part_number} (attempt {tries + 1}): {e}"
+                        f"Error uploading part {part_number} (attempt {upload_tries + 1}): {e}"
                     )
-                    tries += 1
+                    upload_tries += 1
                     time.sleep(5)
 
             if not part_uploaded:
