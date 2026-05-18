@@ -60,26 +60,25 @@ else
         if curl --fail --location "https://api.gdc.cancer.gov/data/$ID" \
             --header "X-Auth-Token: $GDC_TOKEN" \
             | python3 -c "
-    import sys, hashlib, traceback
-    try:
-        h = hashlib.md5()
-        n = 0
-        buf_size = 8 * 1024 * 1024
-        while True:
-            chunk = sys.stdin.buffer.read(buf_size)
-            if not chunk:
-                break
-            h.update(chunk)
-            n += len(chunk)
-            sys.stdout.buffer.write(chunk)
-            sys.stdout.buffer.flush()
-        sys.stderr.write(h.hexdigest() + '\n')
-        sys.stderr.write(str(n) + '\n')
-    except Exception as e:
-        sys.stderr.write('PYTHON ERROR: ' + str(e) + '\n')
-        sys.stderr.write(traceback.format_exc())
-        sys.exit(1)
-    " 2>"$HASH_FILE" \
+import sys, hashlib, traceback
+try:
+    h = hashlib.md5()
+    n = 0
+    buf_size = 8 * 1024 * 1024
+    while True:
+        chunk = sys.stdin.buffer.read(buf_size)
+        if not chunk:
+            break
+        h.update(chunk)
+        n += len(chunk)
+        sys.stdout.buffer.write(chunk)
+        sys.stdout.buffer.flush()
+    sys.stderr.write(h.hexdigest() + '\n')
+    sys.stderr.write(str(n) + '\n')
+except Exception as e:
+    sys.stderr.write('PYTHON ERROR: ' + str(e) + '\n')
+    sys.stderr.write(traceback.format_exc())
+    sys.exit(1)" 2>"$HASH_FILE" \
             | "${aws_cp_cmd[@]}" 2>"$S5CMD_ERR_FILE"; then
 
             downloaded_md5=$(sed -n '1p' "$HASH_FILE")
