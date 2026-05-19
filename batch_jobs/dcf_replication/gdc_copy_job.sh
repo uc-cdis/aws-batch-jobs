@@ -11,9 +11,8 @@ else
     S3_PREFIX="s3://$DESTINATION_BUCKET"
 fi
 
-MULTIPART_THRESHOLD=1
 GIG_MULTIPLIER=$(( 1024 ** 3 ))
-$(( $GIG_MULTIPLIER * $MULTIPART_THRESHOLD ))
+MULTI_PART_THRESHOLD=$(( $GIG_MULTIPLIER * $MULTI_PART_THRESHOLD ))
 
 S3_OBJ="$S3_PREFIX/$KEY"
 MAX_RETRIES=3
@@ -21,9 +20,11 @@ RETRY_DELAY=10
 attempt=1
 success=false
 
-if [ "$SIZE" -ge "$(( $GIG_MULTIPLIER * $MULTIPART_THRESHOLD ))" ]; then
+if [ "$SIZE" -ge "$(( $GIG_MULTIPLIER * $MULTI_PART_THRESHOLD ))" ]; then
 
-    command="python3 ./batch_jobs/dcf_replication/file_get_upload.py upload_data --file_id $ID --gdc_token $GDC_TOKEN --target_bucket $DESTINATION_BUCKET --object_path $KEY --file_size $SIZE --expected_md5 $MD5SUM"
+    echo "Using multipart to upload file $ID..."
+
+    command="python3 ./batch_jobs/dcf_replication/file_get_upload.py upload_data --file_id $ID --gdc_token $GDC_TOKEN --target_bucket $DESTINATION_BUCKET --object_path $KEY --file_size $SIZE --expected_md5 $MD5SUM --chunk_size $CHUNK_SIZE"
 
     while [ "$attempt" -le "$MAX_RETRIES" ]; do
         if $command; then
@@ -47,6 +48,8 @@ if [ "$SIZE" -ge "$(( $GIG_MULTIPLIER * $MULTIPART_THRESHOLD ))" ]; then
     echo "SUCCESS: File verified and transferred"
     exit 0
 else
+    echo "Using s5cmd to upload file $ID..."
+
     while [ "$attempt" -le "$MAX_RETRIES" ]; do
         HASH_FILE="$(mktemp /tmp/hashout.XXXXXX)"
         S5CMD_ERR_FILE="$(mktemp /tmp/s5cmderr.XXXXXX)"

@@ -33,6 +33,18 @@ def parse_arguments():
         default=5,
         help="Max retry attempt until a file copy is considered a failed",
     )
+    dcf_replication_cmd.add_argument(
+        "--mult_part_threshold",
+        required=False,
+        default=4,
+        help="Size in GB. Threshold at which to use single part for small files and multi-part for large files.",
+    )
+    dcf_replication_cmd.add_argument(
+        "--chunk_size",
+        required=False,
+        default=256,
+        help="Size in MB. Chunk size at of each part for multipart upload.",
+    )
 
     dcf_replication_cmd.add_argument(
         "--job_queue", required=True, help="The name of s3 job queue"
@@ -56,6 +68,8 @@ if __name__ == "__main__":
             args.job_queue,
             args.job_definition,
             args.output_manifest_bucket,
+            args.mult_part_threshold,
+            args.chunk_size,
             args.thread_count,
             args.max_retries,
         )

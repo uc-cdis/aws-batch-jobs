@@ -7,8 +7,6 @@ import urllib
 
 import boto3
 
-
-CHUNK_SIZE = 128 * 1024 * 1024
 RETRIES_NUM = 3
 
 
