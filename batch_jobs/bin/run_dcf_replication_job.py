@@ -34,7 +34,7 @@ def parse_arguments():
         help="Max retry attempt until a file copy is considered a failed",
     )
     dcf_replication_cmd.add_argument(
-        "--mult_part_threshold",
+        "--multi_part_threshold",
         required=False,
         default=4,
         help="Size in GB. Threshold at which to use single part for small files and multi-part for large files.",
@@ -68,7 +68,7 @@ if __name__ == "__main__":
             args.job_queue,
             args.job_definition,
             args.output_manifest_bucket,
-            args.mult_part_threshold,
+            args.multi_part_threshold,
             args.chunk_size,
             args.thread_count,
             args.max_retries,
