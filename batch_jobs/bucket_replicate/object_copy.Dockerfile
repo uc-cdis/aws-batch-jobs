@@ -1,4 +1,4 @@
-FROM amazon/aws-cli
+FROM amazon/aws-cli:2.34.50
 
 COPY . /bucket-replicate
 
