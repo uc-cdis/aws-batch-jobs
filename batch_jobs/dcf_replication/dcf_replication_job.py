@@ -45,7 +45,7 @@ def run_job(
         job_queue(str): job queue name
         job_definition(str): job definition name
         output_manifest_bucket(str): output bucket for failure and success manifests
-        multi_part_threshold(int): Size in GB. Threshold at which to use single part for small files and multi-part for large files.
+        multi_part_threshold(int): Size in MB. Threshold at which to use single part for small files and multi-part for large files.
         chunk_size(int): Size in MB. Chunk size at of each part for multipart upload.
 
     Returns:
@@ -58,8 +58,8 @@ def run_job(
 
     NUMBER_OF_THREADS = int(thread_count)
     MAX_RETRIES = int(max_retries)
-    MULTI_PART_THRESHOLD = multi_part_threshold
-    CHUNK_SIZE = chunk_size
+    MULTI_PART_THRESHOLD = multi_part_threshold * (1024**2)
+    CHUNK_SIZE = chunk_size * (1024**2)
 
     START_TIME = int(time.time())
     logging.info(
