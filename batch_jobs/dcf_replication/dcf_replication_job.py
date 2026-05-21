@@ -58,8 +58,8 @@ def run_job(
 
     NUMBER_OF_THREADS = int(thread_count)
     MAX_RETRIES = int(max_retries)
-    MULTI_PART_THRESHOLD = multi_part_threshold * (1024**2)
-    CHUNK_SIZE = chunk_size * (1024**2)
+    MULTI_PART_THRESHOLD = multi_part_threshold
+    CHUNK_SIZE = chunk_size
 
     START_TIME = int(time.time())
     logging.info(

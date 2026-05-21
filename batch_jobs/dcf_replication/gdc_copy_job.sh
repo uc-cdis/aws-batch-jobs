@@ -11,13 +11,17 @@ else
     S3_PREFIX="s3://$DESTINATION_BUCKET"
 fi
 
+MB_MULTIPLIER=$(( 1024 ** 2 ))
+MULTI_PART_THRESHOLD=$(( $MB_MULTIPLIER * $MULTI_PART_THRESHOLD ))
+CHUNK_SIZE=$(( $MB_MULTIPLIER * $ $CHUNK_SIZE ))
+
 S3_OBJ="$S3_PREFIX/$KEY"
 MAX_RETRIES=3
 RETRY_DELAY=10
 attempt=1
 success=false
 
-if [ "$SIZE" -ge "$(( $MB_MULTIPLIER * $MULTI_PART_THRESHOLD ))" ]; then
+if [ "$SIZE" -ge "$(( $MULTI_PART_THRESHOLD ))" ]; then
 
     echo "Using multipart to upload file $ID..."
 
