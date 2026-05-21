@@ -4,9 +4,9 @@ import math
 import re
 import sys
 import time
-import urllib
 
 import boto3
+import requests
 
 RETRIES_NUM = 3
 
@@ -69,15 +69,15 @@ def api_to_bucket_copy(
 
             while download_tries < retries_num and not chunk_downloaded:
                 try:
-                    response = urllib.request.Request(
+                    response = requests.get(
                         DATA_ENDPOINT,
                         headers={
                             "X-Auth-Token": gdc_token,
                             "Range": f"bytes={start}-{end}",
                         },
                     )
-
-                    chunk = urllib.request.urlopen(response).read()
+                    response.raise_for_status()
+                    chunk = response.content
 
                     if len(chunk) == end - start + 1:
                         chunk_downloaded = True
