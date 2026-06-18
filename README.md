@@ -29,3 +29,4 @@ An example of the body of a SQS message:
   "Body": {"url": "s3://test_bucket/test_key, "size": 100, "md5": "91afa59a9469e12e0b0844712c756b08"}
 }
 ```
+
