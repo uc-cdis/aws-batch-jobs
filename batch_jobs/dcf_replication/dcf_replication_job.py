@@ -17,6 +17,7 @@ from batch_jobs.bin.settings import (
     POSTFIX_2_EXCEPTION,
     PROJECT_ACL,
     GDC_TOKEN,
+    INDEXD,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -62,6 +63,23 @@ def run_job(
     CHUNK_SIZE = chunk_size
 
     START_TIME = int(time.time())
+
+    global USERNAME
+    global PASSWORD
+    global HOSTNAME
+    if INDEXD:
+        if INDEXD.get("host"):
+            HOSTNAME = INDEXD.get("host")
+        else:
+            logging.error(f"INDEXD HOST not set in DCF Dataservice Settings file.")
+        if INDEXD.get("auth").get("username") or INDEXD.get("auth").get("password"):
+            USERNAME = INDEXD.get("auth").get("username")
+            PASSWORD = INDEXD.get("auth").get("password")
+        else:
+            logging.error(f"INDEXD auth not set in DCF Dataservice Settings file.")
+    else:
+        logging.error("INDEXD Settings not set in DCF Dataservice Settings file")
+
     logging.info(
         f"Submission Job started at {START_TIME} with {NUMBER_OF_THREADS} threads and {MAX_RETRIES} retries."
     )
@@ -120,6 +138,9 @@ def submit_job(job_queue, job_definition, file):
         file[JOB_STATUS_KEY] = "SKIPPED"
         return file
 
+    acls, authz = extract_acl_authz_info(file)
+    acls, authz = convert_acl_authz_for_bash(acls, authz)
+
     client = boto3.client("batch", region_name=REGION)
     n_tries = 0
     while n_tries < MAX_RETRIES:
@@ -134,12 +155,17 @@ def submit_job(job_queue, job_definition, file):
                         {"value": file["file_name"], "name": "FILE_NAME"},
                         {"value": file["size"], "name": "SIZE"},
                         {"value": file["md5"], "name": "MD5SUM"},
+                        {"value": str(acls), "name": "ACL"},
+                        {"value": str(authz), "name": "AUTHZ"},
                         {
                             "value": file["destination_bucket"],
                             "name": "DESTINATION_BUCKET",
                         },
                         {"value": key, "name": "KEY"},
                         {"value": GDC_TOKEN, "name": "GDC_TOKEN"},
+                        {"value": HOSTNAME, "name": "HOSTNAME"},
+                        {"value": USERNAME, "name": "USERNAME"},
+                        {"value": PASSWORD, "name": "PASSWORD"},
                         {"value": "default", "name": "PROFILE_NAME"},
                         {"value": MULTI_PART_THRESHOLD, "name": "MULTI_PART_THRESHOLD"},
                         {"value": CHUNK_SIZE, "name": "CHUNK_SIZE"},
@@ -355,11 +381,7 @@ def check_bucket_exists(s3, bucket_name):
         return False
 
 
-def convert_file_info_to_output_manifest(file_info):
-    """
-    Convert file_info to output manifest row for indexing
-    Columns: ['guid','md5','size','authz','acl','file_name','urls']
-    """
+def extract_acl_authz_info(file_info):
     acls = []
     authz = []
     # Process acl and set authz value
@@ -379,7 +401,16 @@ def convert_file_info_to_output_manifest(file_info):
                     )
                 )
         authz = ["/programs/{}".format(acl) for acl in acls]
+    return acls, authz
 
+
+def convert_file_info_to_output_manifest(file_info):
+    """
+    Convert file_info to output manifest row for indexing
+    Columns: ['guid','md5','size','authz','acl','file_name','urls']
+    """
+
+    acls, authz = extract_acl_authz_info(file_info)
     # Determine final urls
     object_key = "{}/{}".format(file_info.get("id"), file_info.get("file_name"))
     upload_url = "s3://{}/{}".format(file_info["destination_bucket"], object_key)
