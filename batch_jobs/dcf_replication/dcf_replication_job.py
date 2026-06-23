@@ -34,24 +34,34 @@ def run_job(
     job_queue,
     job_definition,
     output_manifest_bucket,
+    multi_part_threshold,
+    chunk_size,
     thread_count=NUMBER_OF_THREADS,
     max_retries=MAX_RETRIES,
 ):
     """
     Start to run an job to generate bucket manifest
     Args:
-        file_info(dict): file info
+        manifest_file(str): s3 location of the manifest file
         job_queue(str): job queue name
         job_definition(str): job definition name
+        output_manifest_bucket(str): output bucket for failure and success manifests
+        multi_part_threshold(int): Size in MB. Threshold at which to use single part for small files and multi-part for large files.
+        chunk_size(int): Size in MB. Chunk size at of each part for multipart upload.
 
     Returns:
         bool: True if the job was submitted successfully
     """
     global NUMBER_OF_THREADS
     global MAX_RETRIES
+    global MULTI_PART_THRESHOLD
+    global CHUNK_SIZE
 
     NUMBER_OF_THREADS = int(thread_count)
     MAX_RETRIES = int(max_retries)
+    MULTI_PART_THRESHOLD = multi_part_threshold
+    CHUNK_SIZE = chunk_size
+
     START_TIME = int(time.time())
 
     global USERNAME
@@ -73,10 +83,21 @@ def run_job(
     logging.info(
         f"Submission Job started at {START_TIME} with {NUMBER_OF_THREADS} threads and {MAX_RETRIES} retries."
     )
+    logging.info(
+        f"=======JOB SETTINGS======== \n"
+        f"Number of threads: {NUMBER_OF_THREADS} \n"
+        f"Multi-part threashold: {MULTI_PART_THRESHOLD} GB \n"
+        f"Multi-part chunk size: {CHUNK_SIZE} \n"
+        f"==========================="
+    )
+
     local_manifest = get_manifest_from_bucket(manifest_file)
     parsed_data = parse_manifest_file(local_manifest)
     submitted, skipped, failed = submit_jobs(
-        parsed_data, job_queue, job_definition, output_manifest_bucket
+        parsed_data,
+        job_queue,
+        job_definition,
+        output_manifest_bucket,
     )
 
     logging.info(f"Job submission summary:")
@@ -146,6 +167,8 @@ def submit_job(job_queue, job_definition, file):
                         {"value": USERNAME, "name": "USERNAME"},
                         {"value": PASSWORD, "name": "PASSWORD"},
                         {"value": "default", "name": "PROFILE_NAME"},
+                        {"value": MULTI_PART_THRESHOLD, "name": "MULTI_PART_THRESHOLD"},
+                        {"value": CHUNK_SIZE, "name": "CHUNK_SIZE"},
                     ]
                 },
             )
@@ -169,24 +192,12 @@ def submit_job(job_queue, job_definition, file):
     return file
 
 
-def convert_acl_authz_for_bash(acl, authz):
-    """
-    Converts acl and authz into strings separated by spaces.
-
-    Args:
-        acl (list): acl of object
-        authz (list): authz of object
-    """
-    acl_str = ""
-    authz_str = ""
-    for a in acl:
-        acl_str += f"{a}"
-    for z in authz:
-        authz_str += f"{z}"
-    return acl_str.rstrip(), authz_str.rstrip()
-
-
-def submit_jobs(file_info, job_queue, job_definition, output_manifest_bucket):
+def submit_jobs(
+    file_info,
+    job_queue,
+    job_definition,
+    output_manifest_bucket,
+):
     """
     Submit jobs to the queue
 
