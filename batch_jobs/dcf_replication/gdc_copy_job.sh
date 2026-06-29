@@ -1,9 +1,11 @@
 #!/bin/bash
 set -uxo pipefail
 
+echo_with_job_id() { echo "File $ID: $1"}
+
 aws configure set aws_access_key_id "$ACCESS_KEY_ID"
 aws configure set aws_secret_access_key "$SECRET_ACCESS_KEY"
-echo "aws credentials configured."
+echo_with_job_id "aws credentials configured."
 
 if [[ "$DESTINATION_BUCKET" == s3://* ]]; then
     S3_PREFIX="${DESTINATION_BUCKET%/}"
@@ -23,33 +25,33 @@ success=false
 
 if [ "$SIZE" -ge "$MULTI_PART_THRESHOLD" ]; then
 
-    echo "Using multipart to upload file $ID..."
+    echo_with_job_id "Using multipart to upload file $ID..."
 
     command="python3 ./batch_jobs/dcf_replication/file_get_upload.py upload_data --file_id $ID --gdc_token $GDC_TOKEN --target_bucket $DESTINATION_BUCKET --object_path $KEY --file_size $SIZE --expected_md5 $MD5SUM --chunk_size $CHUNK_SIZE"
 
     while [ "$attempt" -le "$MAX_RETRIES" ]; do
         if $command; then
-            echo "Download validation passed, upload complete."
+            echo_with_job_id "Download validation passed, upload complete."
             success=true
             break
         else
-            echo "Transfer failed on attempt $attempt"
+            echo_with_job_id "Transfer failed on attempt $attempt"
         fi
 
-        echo "Attempt $attempt failed, sleeping $RETRY_DELAY seconds then retrying..."
+        echo_with_job_id "Attempt $attempt failed, sleeping $RETRY_DELAY seconds then retrying..."
         sleep "$RETRY_DELAY"
         attempt=$((attempt + 1))
     done
 
     if [ "$success" = false ]; then
-        echo "ERROR: File transfer failed after $MAX_RETRIES attempts"
+        echo_with_job_id "ERROR: File transfer failed after $MAX_RETRIES attempts"
         exit 1
     fi
 
-    echo "SUCCESS: File verified and transferred"
+    echo_with_job_id "SUCCESS: File verified and transferred"
     exit 0
 else
-    echo "Using s5cmd to upload file $ID..."
+    echo_with_job_id "Using s5cmd to upload file $ID..."
 
     while [ "$attempt" -le "$MAX_RETRIES" ]; do
         HASH_FILE="$(mktemp /tmp/hashout.XXXXXX)"
@@ -94,54 +96,54 @@ except Exception as e:
 
             if [ -n "${SIZE:-}" ]; then
                 if [ "$downloaded_size" -ne "$SIZE" ]; then
-                    echo "Size mismatch: Expected $SIZE bytes, got $downloaded_size bytes"
+                    echo_with_job_id "Size mismatch: Expected $SIZE bytes, got $downloaded_size bytes"
                     size_ok=false
                 else
-                    echo "Size validation passed: $downloaded_size bytes"
+                    echo_with_job_id "Size validation passed: $downloaded_size bytes"
                 fi
             else
-                echo "SIZE not set, skipping size validation (observed: $downloaded_size bytes)"
+                echo_with_job_id "SIZE not set, skipping size validation (observed: $downloaded_size bytes)"
             fi
 
             if [ -n "${MD5SUM:-}" ]; then
                 if [ "$downloaded_md5" != "$MD5SUM" ]; then
-                    echo "md5sum mismatch: Expected $MD5SUM, got $downloaded_md5"
+                    echo_with_job_id "md5sum mismatch: Expected $MD5SUM, got $downloaded_md5"
                     md5_ok=false
                 else
-                    echo "MD5 validation passed: $downloaded_md5"
+                    echo_with_job_id "MD5 validation passed: $downloaded_md5"
                 fi
             else
-                echo "MD5SUM not set, skipping MD5 validation (observed: $downloaded_md5)"
+                echo_with_job_id "MD5SUM not set, skipping MD5 validation (observed: $downloaded_md5)"
             fi
 
             if [ "$size_ok" = true ] && [ "$md5_ok" = true ]; then
-                echo "Download validation passed, upload complete."
+                echo_with_job_id "Download validation passed, upload complete."
                 success=true
                 break
             else
-                echo "Validation failed, removing possibly corrupt S3 object: $S3_OBJ"
+                echo_with_job_id "Validation failed, removing possibly corrupt S3 object: $S3_OBJ"
                 s5cmd rm "$S3_OBJ" || true
             fi
 
         else
-            echo "curl/pipe/s5cmd pipeline failed"
-            echo "=== Python stderr (md5/size or traceback) ==="
+            echo_with_job_id "curl/pipe/s5cmd pipeline failed"
+            echo_with_job_id "=== Python stderr (md5/size or traceback) ==="
             cat "$HASH_FILE" || true
-            echo "=== s5cmd stderr ==="
+            echo_with_job_id "=== s5cmd stderr ==="
             cat "$S5CMD_ERR_FILE" || true
             rm -f "$HASH_FILE" "$S5CMD_ERR_FILE" || true
         fi
 
-        echo "Attempt $attempt failed, sleeping $RETRY_DELAY seconds then retrying..."
+        echo_with_job_id "Attempt $attempt failed, sleeping $RETRY_DELAY seconds then retrying..."
         sleep "$RETRY_DELAY"
         attempt=$((attempt + 1))
     done
 
     if [ "$success" = false ]; then
-        echo "ERROR: File transfer failed after $MAX_RETRIES attempts"
+        echo_with_job_id "ERROR: File transfer failed after $MAX_RETRIES attempts"
         exit 1
     fi
 
-    echo "SUCCESS: File verified and transferred"
+    echo_with_job_id "SUCCESS: File verified and transferred"
     exit 0
 fi
