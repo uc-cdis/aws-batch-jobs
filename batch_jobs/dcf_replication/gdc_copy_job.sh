@@ -1,7 +1,9 @@
 #!/bin/bash
 set -uxo pipefail
 
-echo_with_job_id() { echo "File $ID: $1"}
+echo_with_job_id() {
+    echo "File $ID: $1"
+}
 
 aws configure set aws_access_key_id "$ACCESS_KEY_ID"
 aws configure set aws_secret_access_key "$SECRET_ACCESS_KEY"
