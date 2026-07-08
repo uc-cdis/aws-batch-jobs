@@ -145,10 +145,8 @@ except Exception as e:
 
 fi
 
-if [ "$success" == true]; then
-
+if [ "$success" = true]; then
     echo "Start Indexing File"
-
     index_command="python3 ./batch_jobs/dcf_replication/index_file.py index_record --host $HOSTNAME --username $USERNAME --password $PASSWORD --file_id $ID --s3_url $S3_OBJ --file_size $SIZE --md5_hash $MD5SUM --acl $ACL --authz $AUTHZ --retry $MAX_RETRIES"
 fi
 
