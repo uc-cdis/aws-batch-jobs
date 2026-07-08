@@ -47,7 +47,6 @@ if [ "$SIZE" -ge "$MULTI_PART_THRESHOLD" ]; then
     fi
 
     echo "SUCCESS: File verified and transferred"
-    exit 0
 else
     echo "Using s5cmd to upload file $ID..."
 
@@ -144,9 +143,13 @@ except Exception as e:
 
     echo "SUCCESS: File verified and transferred"
 
+fi
+
+if [ "$success" == true]; then
+
     echo "Start Indexing File"
 
     index_command="python3 ./batch_jobs/dcf_replication/index_file.py index_record --host $HOSTNAME --username $USERNAME --password $PASSWORD --file_id $ID --s3_url $S3_OBJ --file_size $SIZE --md5_hash $MD5SUM --acl $ACL --authz $AUTHZ --retry $MAX_RETRIES"
-
-    exit 0
 fi
+
+exit 0

@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 
 from indexclient.client import IndexClient
 
@@ -32,6 +33,9 @@ def update_or_index_file(
         authz (str): authz from the GDC manifest
         retry (int): number of retries for the api call
     """
+    index_get_tries = 0
+    index_post_tries = 0
+
     indexclient = IndexClient(
         host,
         "v0",
@@ -46,50 +50,53 @@ def update_or_index_file(
     input_urls = [s3_url, gdc_url]
 
     # record already exists
-    try:
-        doc = indexclient.get(file_id)
-        if doc:
-            need_update = False
-            if input_urls not in doc.urls:
-                doc.urls = input_urls
-                need_update = True
+    while index_get_tries < retry:
+        try:
+            doc = indexclient.get(file_id)
+            if doc:
+                need_update = False
+                if input_urls not in doc.urls:
+                    doc.urls = input_urls
+                    need_update = True
 
-            if set(doc.acl) != set(acl):
-                doc.acl = acl
-                need_update = True
+                if set(doc.acl) != set(acl):
+                    doc.acl = acl
+                    need_update = True
 
-            if set(doc.authz) != set(authz):
-                doc.authz = authz
-                need_update = True
+                if set(doc.authz) != set(authz):
+                    doc.authz = authz
+                    need_update = True
 
-            if need_update:
-                doc.patch()
-            return doc is not None
-    except Exception as e:
-        raise logging.error(
-            "INDEX_CLIENT: Can not update the record with uuid {}. Detail {}".format(
-                file_id, e
+                if need_update:
+                    doc.patch()
+                break
+        except Exception as e:
+            index_get_tries += 1
+            raise logging.error(
+                "INDEX_CLIENT: Can not update the record with uuid {}. Detail {}".format(
+                    file_id, e
+                )
             )
-        )
 
     # record doesn't exist. Create a new one
-    try:
-        doc = indexclient.create(
-            did=file_id,
-            hashes={"md5": md5_hash},
-            size=file_size,
-            acl=acl,
-            authz=authz,
-            urls=input_urls,
-        )
-        return doc is not None
-    except Exception as e:
-        # Don't break for any reason
-        raise logging.error(
-            "INDEX_CLIENT: Can not create the record with uuid {}. Detail {}".format(
-                file_id, e
+    while index_post_tries < retry:
+        try:
+            doc = indexclient.create(
+                did=file_id,
+                hashes={"md5": md5_hash},
+                size=file_size,
+                acl=acl,
+                authz=authz,
+                urls=input_urls,
             )
-        )
+            break
+        except Exception as e:
+            index_post_tries += 1
+            raise logging.error(
+                "INDEX_CLIENT: Can not create the record with uuid {}. Detail {}".format(
+                    file_id, e
+                )
+            )
 
 
 def parse_arguments():
@@ -147,15 +154,21 @@ def parse_arguments():
 if __name__ == "__main__":
     args = parse_arguments()
     if args.action == "index_record":
-        update_or_index_file(
-            args.host,
-            args.username,
-            args.password,
-            args.file_id,
-            args.s3_url,
-            int(args.file_size),
-            args.md5_hash,
-            args.acl,
-            args.authz,
-            int(args.retry),
-        )
+        try:
+            update_or_index_file(
+                args.host,
+                args.username,
+                args.password,
+                args.file_id,
+                args.s3_url,
+                int(args.file_size),
+                args.md5_hash,
+                args.acl,
+                args.authz,
+                int(args.retry),
+            )
+            logging.ingo(f"Successfully indexed file: {args.file_id}")
+            sys.exit(0)
+        except Exception as e:
+            logging.error(f"Something went wrong with indexing: {e}")
+            sys.exit(1)
