@@ -418,6 +418,7 @@ def extract_acl_authz_info(file_info):
                     )
                 )
         authz = ["/programs/{}".format(acl) for acl in acls]
+    print(acls, authz)
     return acls, authz
 
 
