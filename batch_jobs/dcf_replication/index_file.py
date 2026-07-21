@@ -51,8 +51,12 @@ def update_or_index_file(
 
     # record already exists
     while index_get_tries < retry:
+        logging.info(f"Checking file {file_id} exists...")
+
         try:
             doc = indexclient.get(file_id)
+            print("-------------------------------------------")
+            print(doc)
             if doc:
                 need_update = False
                 if input_urls not in doc.urls:
