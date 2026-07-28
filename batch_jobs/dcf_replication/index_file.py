@@ -59,9 +59,6 @@ def update_or_index_file(
         (username, password),
     )
 
-    print("====================")
-    print(host, username, password, file_id, s3_url, file_size, md5_hash, acl, authz)
-
     # Make gdc https url for given record
     gdc_url = f"https://api.gdc.cancer.gov/data/{file_id}"
     input_urls = [s3_url, gdc_url]
@@ -72,8 +69,6 @@ def update_or_index_file(
 
         try:
             doc = indexclient.get(file_id)
-            print("-------------------------------------------")
-            print(doc)
             if doc:
                 need_update = False
                 if input_urls not in doc.urls:
@@ -91,7 +86,7 @@ def update_or_index_file(
                 if need_update:
                     doc.patch()
             else:
-                print(f"IndexD record not found for file {file_id}")
+                logging.info(f"IndexD record not found for file {file_id}")
             break
         except Exception as e:
             index_get_tries += 1
@@ -190,7 +185,7 @@ if __name__ == "__main__":
                 convert_string_list_to_list(args.authz),
                 int(args.retry),
             )
-            logging.ingo(f"Successfully indexed file: {args.file_id}")
+            logging.info(f"Successfully indexed file: {args.file_id}")
             sys.exit(0)
         except Exception as e:
             logging.error(f"Something went wrong with indexing: {e}")
