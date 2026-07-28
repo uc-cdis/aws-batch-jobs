@@ -139,7 +139,7 @@ def submit_job(job_queue, job_definition, file):
         return file
 
     acls, authz = extract_acl_authz_info(file)
-    # acls, authz = convert_acl_authz_for_bash(acls, authz)
+    acls, authz = convert_acl_authz_for_bash(acls, authz)
 
     client = boto3.client("batch", region_name=REGION)
     n_tries = 0

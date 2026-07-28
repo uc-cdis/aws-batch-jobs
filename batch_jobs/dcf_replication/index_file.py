@@ -91,9 +91,9 @@ def update_or_index_file(
                 did=file_id,
                 hashes={"md5": md5_hash},
                 size=file_size,
-                acl=acl,
-                authz=authz,
-                urls=input_urls,
+                acl=list(acl),
+                authz=list(authz),
+                urls=list(input_urls),
             )
             break
         except Exception as e:
