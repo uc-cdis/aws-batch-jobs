@@ -139,7 +139,7 @@ def submit_job(job_queue, job_definition, file):
         return file
 
     acls, authz = extract_acl_authz_info(file)
-    acls, authz = convert_acl_authz_for_bash(acls, authz)
+    # acls, authz = convert_acl_authz_for_bash(acls, authz)
 
     client = boto3.client("batch", region_name=REGION)
     n_tries = 0
@@ -155,8 +155,8 @@ def submit_job(job_queue, job_definition, file):
                         {"value": file["file_name"], "name": "FILE_NAME"},
                         {"value": file["size"], "name": "SIZE"},
                         {"value": file["md5"], "name": "MD5SUM"},
-                        {"value": str(acls), "name": "ACL"},
-                        {"value": str(authz), "name": "AUTHZ"},
+                        {"value": acls, "name": "ACL"},
+                        {"value": authz, "name": "AUTHZ"},
                         {
                             "value": file["destination_bucket"],
                             "name": "DESTINATION_BUCKET",
