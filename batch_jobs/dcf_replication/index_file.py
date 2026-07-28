@@ -5,6 +5,23 @@ import sys
 from indexclient.client import IndexClient
 
 
+def convert_string_list_to_list(input_string):
+    """
+    converts a string representation of a list to a list
+
+    Args:
+        input_string (str): string representation of a list eg "['a', 'b', 'c']"
+
+    Returns:
+        list : ['a', 'b', 'c']
+    """
+    input_string = (
+        input_string.replace("[", "").replace("]", "").replace("'", "").replace(",", "")
+    )
+    input_string = input_string.split()
+    return input_string
+
+
 def update_or_index_file(
     host,
     username,
@@ -169,8 +186,8 @@ if __name__ == "__main__":
                 args.s3_url,
                 int(args.file_size),
                 args.md5_hash,
-                args.acl,
-                args.authz,
+                convert_string_list_to_list(args.acl),
+                convert_string_list_to_list(args.authz),
                 int(args.retry),
             )
             logging.ingo(f"Successfully indexed file: {args.file_id}")
