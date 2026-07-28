@@ -73,7 +73,9 @@ def update_or_index_file(
 
                 if need_update:
                     doc.patch()
-                break
+            else:
+                print(f"IndexD record not found for file {file_id}")
+            break
         except Exception as e:
             index_get_tries += 1
             raise logging.error(
