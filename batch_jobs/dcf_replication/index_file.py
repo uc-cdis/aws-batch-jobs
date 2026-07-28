@@ -84,7 +84,11 @@ def update_or_index_file(
                     need_update = True
 
                 if need_update:
+                    logging.info(
+                        f"Attempting to update IndexD record for file {file_id}"
+                    )
                     doc.patch()
+                    logging.info(f"Successfully updated IndexD record {file_id}")
             else:
                 logging.info(f"IndexD record not found for file {file_id}")
             break
@@ -99,6 +103,7 @@ def update_or_index_file(
     # record doesn't exist. Create a new one
     while index_post_tries < retry:
         try:
+            logging.info(f"Attempting to create new IndexD record for file {file_id}")
             doc = indexclient.create(
                 did=file_id,
                 hashes={"md5": md5_hash},
@@ -107,6 +112,7 @@ def update_or_index_file(
                 authz=list(authz),
                 urls=list(input_urls),
             )
+            logging.info(f"Successfully created new IndexD record {file_id}")
             break
         except Exception as e:
             index_post_tries += 1
