@@ -2,6 +2,7 @@ import os
 import sys
 
 import csv
+import json
 from functools import partial
 from multiprocessing.pool import Pool
 import time
@@ -145,7 +146,7 @@ def submit_job(job_queue, job_definition, file):
     n_tries = 0
     while n_tries < MAX_RETRIES:
         try:
-            client.submit_job(
+            response = client.submit_job(
                 jobName="gdc_copy",
                 jobQueue=job_queue,
                 jobDefinition=job_definition,
@@ -174,6 +175,7 @@ def submit_job(job_queue, job_definition, file):
             )
             logging.info("submitting job to copy file {}".format(key))
             file[JOB_STATUS_KEY] = "SUBMITTED"
+            file["job_id"] = response["jobId"]
             return file
         except ClientError as e:
             if e.response["Error"]["Code"] == "AccessDeniedException":
@@ -235,6 +237,7 @@ def submit_jobs(
     submitted_output_manifest = []
     skipped_output_manifest = []
     failed_output_manifest = []
+    in_flight_jobs = []
 
     with Pool(NUMBER_OF_THREADS) as pool:
         results = pool.map(par_submit_job, file_info)
@@ -245,12 +248,18 @@ def submit_jobs(
             submitted_output_manifest.append(
                 convert_file_info_to_output_manifest(result)
             )
+            in_flight_jobs.append({"job_id": result["job_id"], "size": result["size"]})
         elif result[JOB_STATUS_KEY] == "SKIPPED":
             skipped_count += 1
             skipped_output_manifest.append(convert_file_info_to_output_manifest(result))
         elif result[JOB_STATUS_KEY] == "FAILED":
             failed_count += 1
             failed_output_manifest.append(convert_file_info_to_output_manifest(result))
+
+    # Poll AWS Batch and print running download stats until all
+    # submitted jobs finish (succeed or fail); also writes a live
+    # progress snapshot to S3 in output_manifest_bucket
+    monitor_job_progress(in_flight_jobs, output_manifest_bucket=output_manifest_bucket)
 
     write_output_manifest_to_s3_file(
         submitted_output_manifest, output_manifest_bucket, "dcf_aws_batch_submitted"
@@ -263,6 +272,163 @@ def submit_jobs(
     )
 
     return submitted_count, skipped_count, failed_count
+
+
+def format_progress(succeeded_files, total_files, succeeded_bytes, total_bytes):
+    """
+    Formats progress like: "7/150 files, 432.00/25949.00gb downloaded"
+    """
+    gb = 1024**3
+    return (
+        f"{succeeded_files}/{total_files} files, "
+        f"{succeeded_bytes / gb:.2f}/{total_bytes / gb:.2f}gb downloaded"
+    )
+
+
+def write_progress_to_s3(
+    bucket_name,
+    key,
+    succeeded_files,
+    total_files,
+    succeeded_bytes,
+    total_bytes,
+    failed_job_ids,
+):
+    """
+    Overwrite a single S3 object with the current progress snapshot, so
+    there's always one "live" status file reflecting the latest state
+    (rather than accumulating a new file per poll).
+    """
+    try:
+        session = boto3.Session(profile_name="default")
+        s3 = session.client("s3")
+        status = {
+            "updated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "files_succeeded": succeeded_files,
+            "files_total": total_files,
+            "bytes_succeeded": succeeded_bytes,
+            "bytes_total": total_bytes,
+            "gb_succeeded": round(succeeded_bytes / 1024**3, 2),
+            "gb_total": round(total_bytes / 1024**3, 2),
+            "summary": format_progress(
+                succeeded_files, total_files, succeeded_bytes, total_bytes
+            ),
+            "failed_job_ids": failed_job_ids,
+        }
+        s3.put_object(
+            Bucket=bucket_name,
+            Key=key,
+            Body=json.dumps(status, indent=2),
+            ContentType="application/json",
+        )
+    except ClientError as e:
+        # Don't let a status-file write failure kill the monitoring loop
+        logging.error(f"Error writing progress file to s3://{bucket_name}/{key}: {e}")
+
+
+def monitor_job_progress(
+    job_records,
+    output_manifest_bucket=None,
+    progress_key="dcf_aws_batch_progress.json",
+    poll_interval=30,
+):
+    """
+    Poll AWS Batch for the status of submitted jobs and print running
+    success statistics (files and total bytes) until every job reaches
+    a terminal state (SUCCEEDED or FAILED). Optionally also writes the
+    same progress snapshot to a single S3 object each round, so it can
+    be checked externally without tailing pod logs.
+
+    Args:
+        job_records(list): list of dicts, each with "job_id" and "size" (bytes)
+                            for every job that was SUBMITTED to AWS Batch
+        output_manifest_bucket(str): if set, progress is also written to this
+                                      S3 bucket at `progress_key`, overwritten
+                                      each poll round
+        progress_key(str): S3 key for the live progress file
+        poll_interval(int): seconds to wait between polling rounds
+
+    Returns:
+        tuple: (succeeded_files, succeeded_bytes, failed_job_ids)
+    """
+    client = boto3.client("batch", region_name=REGION)
+
+    total_files = len(job_records)
+    total_bytes = sum(int(r["size"]) for r in job_records)
+
+    pending = {r["job_id"]: r for r in job_records}
+    succeeded_files = 0
+    succeeded_bytes = 0
+    failed_job_ids = []
+
+    if not pending:
+        logging.info("No jobs to monitor.")
+        return succeeded_files, succeeded_bytes, failed_job_ids
+
+    logging.info(f"Monitoring {total_files} in-flight download jobs...")
+
+    while pending:
+        job_ids = list(pending.keys())
+
+        # describe_jobs only accepts up to 100 job IDs per call
+        for i in range(0, len(job_ids), 100):
+            batch_ids = job_ids[i : i + 100]
+            try:
+                response = client.describe_jobs(jobs=batch_ids)
+            except ClientError as e:
+                logging.error(f"Error describing jobs: {e}")
+                continue
+
+            for job in response.get("jobs", []):
+                status = job["status"]
+                if status in ("SUCCEEDED", "FAILED"):
+                    record = pending.pop(job["jobId"], None)
+                    if record is None:
+                        continue
+                    if status == "SUCCEEDED":
+                        succeeded_files += 1
+                        succeeded_bytes += int(record["size"])
+                    else:
+                        failed_job_ids.append(job["jobId"])
+                        logging.error(
+                            f"Job {job['jobId']} FAILED: {job.get('statusReason', 'no reason given')}"
+                        )
+
+        logging.info(
+            format_progress(succeeded_files, total_files, succeeded_bytes, total_bytes)
+        )
+
+        if output_manifest_bucket:
+            write_progress_to_s3(
+                output_manifest_bucket,
+                progress_key,
+                succeeded_files,
+                total_files,
+                succeeded_bytes,
+                total_bytes,
+                failed_job_ids,
+            )
+
+        if pending:
+            time.sleep(poll_interval)
+
+    logging.info(
+        "FINAL: "
+        + format_progress(succeeded_files, total_files, succeeded_bytes, total_bytes)
+    )
+
+    if output_manifest_bucket:
+        write_progress_to_s3(
+            output_manifest_bucket,
+            progress_key,
+            succeeded_files,
+            total_files,
+            succeeded_bytes,
+            total_bytes,
+            failed_job_ids,
+        )
+
+    return succeeded_files, succeeded_bytes, failed_job_ids
 
 
 def parse_manifest_file(manifest_file):
