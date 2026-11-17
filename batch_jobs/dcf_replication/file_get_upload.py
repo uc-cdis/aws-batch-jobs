@@ -1,6 +1,7 @@
 import argparse
 import hashlib
 import math
+import random
 import re
 import sys
 import time
@@ -8,7 +9,23 @@ import time
 import boto3
 import requests
 
-RETRIES_NUM = 3
+RETRIES_NUM = 8
+
+# Exponential backoff settings for the GDC data download
+BACKOFF_BASE_DELAY = 5  # seconds before the first retry
+BACKOFF_MAX_DELAY = 300  # cap for a single sleep, in seconds
+BACKOFF_JITTER = 0.25  # +/- fraction of the delay added as random jitter
+
+
+def backoff_delay(attempt):
+    """Seconds to wait before retry number `attempt` (0-indexed).
+
+    Doubles each attempt up to BACKOFF_MAX_DELAY, with random jitter so that
+    concurrent batch jobs do not all retry the API at the same instant.
+    """
+    delay = min(BACKOFF_BASE_DELAY * (2**attempt), BACKOFF_MAX_DELAY)
+    jitter = delay * BACKOFF_JITTER
+    return max(0.0, delay + random.uniform(-jitter, jitter))
 
 
 def generate_chunk_data_list(size, chunk_size):
@@ -86,8 +103,11 @@ def api_to_bucket_copy(
                             f"Chunk size mismatch: expected {end - start + 1}, got {len(chunk)}"
                         )
                         chunk = None
+                        if download_tries + 1 < retries_num:
+                            delay = backoff_delay(download_tries)
+                            print(f"Retrying part {part_number} in {delay:.1f}s")
+                            time.sleep(delay)
                         download_tries += 1
-                        time.sleep(5)
                     print(
                         f"Downloading {DATA_ENDPOINT}: {part_number*(end - start + 1)}/{file_size}"
                     )
@@ -97,8 +117,11 @@ def api_to_bucket_copy(
                         f"Error downloading part {part_number} (attempt {download_tries + 1}): {e}"
                     )
                     chunk = None
+                    if download_tries + 1 < retries_num:
+                        delay = backoff_delay(download_tries)
+                        print(f"Retrying part {part_number} in {delay:.1f}s")
+                        time.sleep(delay)
                     download_tries += 1
-                    time.sleep(5)
 
             if not chunk_downloaded:
                 raise Exception(
