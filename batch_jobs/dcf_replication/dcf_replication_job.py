@@ -4,6 +4,7 @@ import sys
 import csv
 from functools import partial
 from multiprocessing.pool import Pool
+import random
 import time
 import logging
 import io
@@ -27,6 +28,22 @@ JOB_STATUS_KEY = "job_status"
 REGION = os.environ.get("REGION", "us-east-1")
 NUMBER_OF_THREADS = 5
 MAX_RETRIES = 3
+
+# Exponential backoff settings for AWS Batch SubmitJob calls
+BACKOFF_BASE_DELAY = 2  # seconds before the first retry
+BACKOFF_MAX_DELAY = 60  # cap for a single sleep, in seconds
+BACKOFF_JITTER = 0.25  # +/- fraction of the delay added as random jitter
+
+
+def backoff_delay(attempt):
+    """Seconds to wait before retry number `attempt` (0-indexed).
+
+    Doubles each attempt up to BACKOFF_MAX_DELAY, with random jitter so the
+    worker processes in the pool do not all retry on the same tick.
+    """
+    delay = min(BACKOFF_BASE_DELAY * (2**attempt), BACKOFF_MAX_DELAY)
+    jitter = delay * BACKOFF_JITTER
+    return max(0.0, delay + random.uniform(-jitter, jitter))
 
 
 def run_job(
@@ -176,18 +193,37 @@ def submit_job(job_queue, job_definition, file):
             file[JOB_STATUS_KEY] = "SUBMITTED"
             return file
         except ClientError as e:
-            if e.response["Error"]["Code"] == "AccessDeniedException":
+            error_code = e.response["Error"]["Code"]
+            if error_code == "AccessDeniedException":
                 logging.error(
                     "ERROR: Access denied to {}. Detail {}".format(job_queue, e)
                 )
                 sys.exit(1)
-            if e.response["Error"]["Code"] == "TooManyRequestsException":
-                logging.info("TooManyRequestsException. Sleep and retry...")
+            n_tries += 1
+            if error_code == "TooManyRequestsException":
+                logging.info(
+                    "TooManyRequestsException submitting {}. Attempt {}/{}".format(
+                        key, n_tries, MAX_RETRIES
+                    )
+                )
             else:
-                n_tries += 1
-                logging.info("{}. Retry {}".format(e, n_tries))
+                logging.info("{}. Attempt {}/{}".format(e, n_tries, MAX_RETRIES))
+        except Exception as e:
+            n_tries += 1
+            logging.error(
+                "Unexpected error submitting {}: {}. Attempt {}/{}".format(
+                    key, e, n_tries, MAX_RETRIES
+                )
+            )
 
-        time.sleep(2**n_tries)
+        if n_tries < MAX_RETRIES:
+            delay = backoff_delay(n_tries - 1)
+            logging.info("Retrying submission of {} in {:.1f}s".format(key, delay))
+            time.sleep(delay)
+
+    logging.error(
+        "ERROR: Failed to submit job for {} after {} attempts".format(key, MAX_RETRIES)
+    )
     file[JOB_STATUS_KEY] = "FAILED"
     return file
 
