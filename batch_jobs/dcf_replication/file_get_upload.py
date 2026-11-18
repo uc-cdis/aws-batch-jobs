@@ -252,7 +252,7 @@ def parse_arguments():
     file_get_upload_cmd.add_argument(
         "--retry",
         required=False,
-        default=3,
+        default=RETRIES_NUM,
         help="Number of retries for both download and upload",
     )
     return parser.parse_args()
